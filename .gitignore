@@ -57,3 +57,6 @@ typings/
 # dotenv environment variables file
 .env
 
+# Cesium
+Cesium-1/package-lock.json
+Cesium-1/package.json
