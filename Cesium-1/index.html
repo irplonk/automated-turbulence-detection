@@ -17,6 +17,7 @@
   </style>
 </head>
 <body>
+  <div id="hideCredits"></div>
   <div id="cesiumContainer"></div>
   <script>
     // Set center to be the geographic center of the United States
@@ -28,7 +29,8 @@
       timeline : false,
       animation : false,
       baseLayerPicker : false,
-      sceneModePicker : false
+      sceneModePicker : false,
+      creditContainer : "hideCredits"
     });
     // Limit the user's ability to zoom out
     viewer.scene.screenSpaceCameraController.maximumZoomDistance=15000000;

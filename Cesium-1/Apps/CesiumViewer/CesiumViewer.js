@@ -185,6 +185,4 @@ define([
     }
 
     loadingIndicator.style.display = 'none';
-    //remove bing logo
-    viewer.imageryLayers.removeAll();
 });
