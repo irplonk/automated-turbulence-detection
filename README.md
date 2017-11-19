@@ -2,7 +2,7 @@
 Fall 2017-Spring 2018 Junior Design Project with Honeywell
 
 ### Running
-When you pull the repository or switch branches, run
+When you pull the repository or switch branches, from the Cesium-1 directory run
 ```
 npm install
 ```
