@@ -17,41 +17,42 @@
   </style>
 </head>
 <body>
-   <button class="cesium-button cesium-button-toolbar" onclick="toggleTurbulence()">Toggle turbulence</button>
-  <div id="cesiumContainer"></div>
-  <script>
-    // Set center to be the geographic center of the United States
-    var extent = Cesium.Rectangle.fromDegrees(-100,25,-95,55);
-    Cesium.Camera.DEFAULT_VIEW_RECTANGLE = extent;
-    Cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
-    // Remove unnecessary buttons
-    var viewer = new Cesium.Viewer('cesiumContainer', {
-      timeline : false,
-      animation : false,
-      baseLayerPicker : false,
-      sceneModePicker : false
-    });
-    // Limit the user's ability to zoom out
-    viewer.scene.screenSpaceCameraController.maximumZoomDistance=15000000;
+  <div style="width: 100%; height: 100%;">
+    <button style="z-index: 2; position: absolute; top: 6px; left: 6px;" class="cesium-button cesium-button-toolbar" onclick="toggleTurbulence()">Toggle turbulence</button>
+    <div id="cesiumContainer"></div>
+    <script>
+      // Set center to be the geographic center of the United States
+      var extent = Cesium.Rectangle.fromDegrees(-100,25,-95,55);
+      Cesium.Camera.DEFAULT_VIEW_RECTANGLE = extent;
+      Cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
+      // Remove unnecessary buttons
+      var viewer = new Cesium.Viewer('cesiumContainer', {
+        timeline : false,
+        animation : false,
+        baseLayerPicker : false,
+        sceneModePicker : false
+      });
+      // Limit the user's ability to zoom out
+      viewer.scene.screenSpaceCameraController.maximumZoomDistance=15000000;
 
-    // Handle toggling turbulence layer
-    var turbulenceOn = false;
-    var turbulenceLayer = null;
-    function toggleTurbulence() {
-      if (!turbulenceOn) {
-        if (turbulenceLayer === null) {
-          turbulenceLayer = viewer.imageryLayers.addImageryProvider(new Cesium.SingleTileImageryProvider({
-            url : 'Resources/Images/turbulence.png'
-          }));
+      // Handle toggling turbulence layer
+      var turbulenceOn = false;
+      var turbulenceLayer = null;
+      function toggleTurbulence() {
+        if (!turbulenceOn) {
+          if (turbulenceLayer === null) {
+            turbulenceLayer = viewer.imageryLayers.addImageryProvider(new Cesium.SingleTileImageryProvider({
+              url : 'Resources/Images/turbulence.png'
+            }));
+          } else {
+            viewer.imageryLayers.add(turbulenceLayer)
+          }
         } else {
-          viewer.imageryLayers.add(turbulenceLayer)
+          viewer.imageryLayers.remove(turbulenceLayer, false);
         }
-      } else {
-        // viewer.imageryLayers.remove(turbulenceLayer, false);
-        turbulenceLayer.sh
+        turbulenceOn = !turbulenceOn
       }
-      turbulenceOn = !turbulenceOn
-    }
-  </script>
+    </script>
+  </div>
 </body>
 </html>
