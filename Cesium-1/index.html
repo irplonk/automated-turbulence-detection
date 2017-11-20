@@ -52,7 +52,8 @@
         } else {
           viewer.imageryLayers.remove(turbulenceLayer, false);
         }
-        turbulenceOn = !turbulenceOn
+        turbulenceOn = !turbulenceOn;
+        checkbox.checked = turbulenceOn;
       }
 
       // Add turbulence button to toolbar
@@ -60,10 +61,21 @@
       if (arr.length > 0) {
         var toolbar = arr[0]
         var button = document.createElement("button");
-        button.appendChild(document.createTextNode("Toggle Turbulence"));
         button.type = "button";
         button.onclick = toggleTurbulence;
-        button.className = "cesium-button cesium-button-toolbar";
+        button.className = "cesium-button";
+
+        var label = document.createElement("label");
+        label.type = "label";
+        label.style = "pointer-events: none;";
+
+        var checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.style = "pointer-events: none;";
+
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode("Turbulence"));
+        button.appendChild(label);
         toolbar.appendChild(button);
       }
     </script>
