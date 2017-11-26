@@ -19,21 +19,52 @@
 <body>
   <div id="hideCredits"></div>
   <div id="cesiumContainer"></div>
+
+  <script src="wyoming.js"></script>
+
+
   <script>
     // Set center to be the geographic center of the United States
-    var extent = Cesium.Rectangle.fromDegrees(-100,25,-95,55);
-    Cesium.Camera.DEFAULT_VIEW_RECTANGLE = extent;
-    Cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
-    // Remove unnecessary buttons
-    var viewer = new Cesium.Viewer('cesiumContainer', {
-      timeline : false,
-      animation : false,
-      baseLayerPicker : false,
-      sceneModePicker : false,
-      creditContainer : "hideCredits"
-    });
+    // var extent = Cesium.Rectangle.fromDegrees(-100,25,-95,55);
+    // Cesium.Camera.DEFAULT_VIEW_RECTANGLE = extent;
+    // Cesium.Camera.DEFAULT_VIEW_FACTOR = 0;
+    // // Remove unnecessary buttons
+    // var viewer = new Cesium.Viewer('cesiumContainer', {
+    //   timeline : false,
+    //   animation : false,
+    //   baseLayerPicker : false,
+    //   sceneModePicker : false,
+    //   creditContainer : "hideCredits"
+    // });
+
+//   var wyoming = viewer.entities.add({
+//   name : 'Wyoming',
+//   polygon : {
+//     hierarchy : Cesium.Cartesian3.fromDegreesArray([
+//                               -109.080842,45.002073,
+//                               -105.91517,45.002073,
+//                               -104.058488,44.996596,
+//                               -104.053011,43.002989,
+//                               -104.053011,41.003906,
+//                               -105.728954,40.998429,
+//                               -107.919731,41.003906,
+//                               -109.04798,40.998429,
+//                               -111.047063,40.998429,
+//                               -111.047063,42.000709,
+//                               -111.047063,44.476286,
+//                               -111.05254,45.002073]),
+//     height : 0,
+//     material : Cesium.Color.RED.withAlpha(0.5),
+//     outline : true,
+//     outlineColor : Cesium.Color.BLACK
+//   }
+// });
+
+
     // Limit the user's ability to zoom out
     viewer.scene.screenSpaceCameraController.maximumZoomDistance=15000000;
+    // Limit the user's ability to zoom in
+    viewer.scene.screenSpaceCameraController.minimumZoomDistance=1000;
   </script>
 </body>
 </html>

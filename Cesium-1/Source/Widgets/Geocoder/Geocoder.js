@@ -57,7 +57,7 @@ define([
         var textBox = document.createElement('input');
         textBox.type = 'search';
         textBox.className = 'cesium-geocoder-input';
-        textBox.setAttribute('placeholder', 'Enter an address or landmark...');
+        textBox.setAttribute('placeholder', 'Enter an Airport');
         textBox.setAttribute('data-bind', '\
 textInput: searchText,\
 disable: isSearchInProgress,\

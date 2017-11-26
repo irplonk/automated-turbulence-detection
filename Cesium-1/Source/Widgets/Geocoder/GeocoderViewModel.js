@@ -338,6 +338,8 @@ define([
         });
     }
 
+
+
     function chainPromise(promise, geocoderService, query) {
         return promise
             .then(function(result) {
@@ -355,6 +357,8 @@ define([
                 return nextPromise;
             });
     }
+
+
 
     function geocode(viewModel, geocoderServices) {
         var query = viewModel._searchText;
