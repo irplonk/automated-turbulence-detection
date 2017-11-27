@@ -36,7 +36,8 @@
       });
       // Limit the user's ability to zoom out
       viewer.scene.screenSpaceCameraController.maximumZoomDistance=15000000;
-
+      // Limit the user's ability to zoom in
+      viewer.scene.screenSpaceCameraController.minimumZoomDistance=1000;
       // Handle toggling turbulence layer
       var turbulenceOn = false;
       var turbulenceLayer = null;
