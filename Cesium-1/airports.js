@@ -1,9 +1,11 @@
 var airports = [
+  /**
   {
       "id": "document",
       "name": "CZML Path",
       "version": "1.0",
   },
+  **/
   {
       "iata": "UTK",
       "lon": "169.86667",
