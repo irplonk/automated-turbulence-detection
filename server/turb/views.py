@@ -10,5 +10,5 @@ from models import Aircraft
 
 def index(request):
     aircraft = Aircraft('1', 'C150', '100');
-    aircraft.save();
+    aircraft.save()
     return HttpResponse('<h1>Hello, World!</h1>')
