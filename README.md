@@ -6,7 +6,7 @@ You must install `django-environ` to do this run the following line:
 ```
 pip install django-environ
 ```
-Then, create a file named `.env` which will look like this:
+Then, create a file named `.env` in `server/server` which will look like this:
 ```
 DEBUG=on
 SECRET_KEY='your_secret_key'
@@ -18,7 +18,7 @@ DB_PORT=''
 ```
 
 ### Running
-To run the application, run the following line in the server directory:
+To run the application, run the following line in `server`:
 ```
 python manage.py runserver
 ```
