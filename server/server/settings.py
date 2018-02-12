@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 import environ
+import os
+
 root = environ.Path(__file__) - 3  # three folder back (/a/b/c/ - 3 = /)
 env = environ.Env(DEBUG=(bool, False),)  # set default values and casting
 environ.Env.read_env()  # reading .env file
@@ -81,8 +83,8 @@ WSGI_APPLICATION = 'server.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': env('DB_NAME'),
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
         'HOST': env('DB_HOST'),
         'USER': env('DB_USER'),
         'PASSWORD': env('DB_PASSWORD'),

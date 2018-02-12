@@ -9,6 +9,6 @@ from . import models
 
 
 def index(request):
-    aircraft = models.Aircraft(1, 'C150', 100)
+    aircraft = models.Aircraft('C150', 100)
     aircraft.save()
     return HttpResponse('<h1>Hello, World!</h1>')
