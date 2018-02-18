@@ -23,5 +23,9 @@ To run the application, run the following line in `server`:
 python manage.py runserver
 ```
 and navigate to [http://127.0.0.1:8000/](http://127.0.0.1:8000/).
+To use a local database instead, run
+```
+python local_manage.py runserver
+```
 If you make changes to any files while the server is running, it is not
 necessary to restart it. All changes will be present once you reload the webpage.

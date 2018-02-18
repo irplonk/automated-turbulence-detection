@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -160,6 +162,9 @@
       Place ID <span id="place-id"></span><br>
       <span id="place-address"></span>
     </div>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDUEWpnD8lB3k8bcG6yWPsSq3F1tCZ8RPw&callback=initMap&libraries=places,visualization"
+    async defer></script>
+    <script src="{% static "weather_data.js" %}"></script>
     <script>
       var map;
 
@@ -295,8 +300,5 @@
       }
 
     </script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDUEWpnD8lB3k8bcG6yWPsSq3F1tCZ8RPw&callback=initMap&libraries=places,visualization"
-    async defer></script>
-    <script src="weather_data.js"></script>
   </body>
 </html>
