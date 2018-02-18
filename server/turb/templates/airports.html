@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table, th, td {
+    border: 1px solid black;
+}
+</style>
+</head>
+<body>
+<table>
+  <tr>
+    <th>Identifier</th>
+    <th>Name</th>
+  </tr>
+{% if airports %}
+    {% for airport in airports %}
+    <tr>
+      <td>{{ airport.airport_code }}</td>
+      <td>{{ airport.airport_name }}</td>
+    </tr>
+    {% endfor %}
+{% endif %}
+</table>
+</body>
+</html>
