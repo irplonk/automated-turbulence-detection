@@ -11,7 +11,8 @@ from multiprocessing.dummy import Process
 import threading
 import time
 from datetime import timedelta
-
+from django.utils import timezone
+import pytz
 
 class SimulationForm(forms.Form):
     flight_time = forms.FloatField(label='flight_time')
@@ -73,105 +74,67 @@ class SimulationThread(threading.Thread):
         self._unpause_event.set()
 
     def run(self):
+        keep_time = timedelta(hours=1)
         WeatherReport.objects.all().delete()
-
+        Aircraft.objects.all().delete()
         model_aircrafts = {}
-
         while not self.stopped():
-            for report in self.sim.new_reports:
-                if report.aircraft in model_aircrafts:
-                    model_aircraft = model_aircrafts[report.aircraft]
-                else:
-                    model_aircraft = Aircraft(aircraft_type=report.aircraft.type,
-                        weight=report.aircraft.weight)
-                    model_aircrafts[report.aircraft] = model_aircraft
-                    model_aircraft.save()
-                WeatherReport(time=report.time,
-                    latitude=report.lat,
-                    longitude=report.lon,
-                    altitude=report.altitude,
-                    aircraft_type=model_aircraft,
-                    wind_x=report.wind_x,
-                    wind_y=report.wind_y,
-                    tke=report.tke).save()
-            for report in self.sim.removed_reports:
-                if report.aircraft in model_aircrafts:
-                    model_aircraft = model_aircrafts[report.aircraft]
-                else:
-                    model_aircraft = Aircraft(aircraft_type=report.aircraft.type,
-                        weight=report.aircraft.weight)
-                    model_aircrafts[report.aircraft] = model_aircraft
-                    model_aircraft.save()
-                for db_report in WeatherReport.objects.filter(time=report.time,
-                    latitude=report.lat,
-                    longitude=report.lon,
-                    altitude=report.altitude,
-                    aircraft_type=model_aircraft,
-                    wind_x=report.wind_x,
-                    wind_y=report.wind_y,
-                    tke=report.tke).all():
-                    db_report.delete()
-            print(str(len(self.sim.new_reports)) + ' new reports')
-            print(str(len(self.sim.removed_reports)) + ' removed reports')
-
             self._unpause_event.wait()
             start = time.time()
             self.sim.progress(timedelta(seconds=self.time_per_update))
+            for report in self.sim.new_reports:
+                add_report(report)
+            n = 0
+            for report in WeatherReport.objects.filter(time__lte=(self.sim.current_time - keep_time).replace(tzinfo=pytz.UTC)).all():
+                n += 1
+                report.delete()
+            print(str(len(self.sim.new_reports)) + ' new reports')
+            print(str(n) + ' removed reports')
             dif = time.time() - start
             if dif < self.update_time:
                 time.sleep(self.update_time - dif)
+            else:
+                print('simulation progressing ' + str(dif - self.update_time) + 's too slow')
 
     def stop(self):
+        print('simulation stopped')
         self._stop_event.set()
 
     def stopped(self):
         return self._stop_event.is_set()
 
     def pause(self):
+        print('simulation paused')
         self._unpause_event.clear()
 
     def unpause(self):
+        print('simulation unpaused')
         self._unpause_event.set()
 
     def paused(self):
         return self._pause_event.is_set()
 
+def add_report(report: Simulator.WeatherReport):
+    if Aircraft.objects.filter(aircraft_type=report.aircraft.type,
+        weight=report.aircraft.weight).exists():
+        model_aircraft = Aircraft.objects.filter(aircraft_type=report.aircraft.type,
+            weight=report.aircraft.weight)[0]
+    else:
+        model_aircraft = Aircraft(aircraft_type=report.aircraft.type,
+            weight=report.aircraft.weight)
+        model_aircraft.save()
+    WeatherReport(
+        time=report.time.replace(tzinfo=pytz.UTC),
+        latitude=report.lat,
+        longitude=report.lon,
+        altitude=report.altitude,
+        aircraft_type=model_aircraft,
+        wind_x=report.wind_x,
+        wind_y=report.wind_y,
+        tke=report.tke).save()
+
 def index(request: HttpRequest) -> HttpResponse:
     return render(request, 'index.html', {})
-
-def del_db(request: HttpRequest) -> HttpResponse:
-    """
-    for plane in Aircraft.objects.all()[:4]:
-        plane.delete()
-    """
-    return HttpResponse('Database deleted')
-
-def make_db(request: HttpRequest) -> HttpResponse:
-    model_aircrafts = {}
-    simulator = Simulator.WeatherReportSimulator.get_default()
-    simulator.progress(timedelta(hours=2))
-    print('Simulation completed')
-
-    """
-    for report in simulator.current_reports:
-        if report.aircraft in model_aircrafts:
-            model_aircraft = model_aircrafts[report.aircraft]
-        else:
-            model_aircraft = Aircraft(aircraft_type=report.aircraft.type,
-                weight=report.aircraft.weight)
-            model_aircrafts[report.aircraft] = model_aircraft
-            model_aircraft.save()
-
-        report = WeatherReport(time=report.time,
-            latitude=report.lat,
-            longitude=report.lon,
-            altitude=report.altitude,
-            aircraft_type=model_aircraft,
-            wind_x=report.wind_x,
-            wind_y=report.wind_y,
-            tke=report.tke).save()
-    """
-    return HttpResponse('Database remade')
 
 def airplanes(request: HttpRequest) -> HttpResponse:
     return render(request, 'airplanes.html',
