@@ -129,7 +129,6 @@ class FlightsGenerator:
 
 
 class FlightsSimulator:
-
     def __init__(self, flight_generator: FlightsGenerator):
         """Creates a new flights simulator.
 
@@ -254,14 +253,19 @@ class WeatherReportSimulator:
         self._report_generator = report_generator
         self.keep_time = keep_time
         self.current_reports = deque()
+        self.new_reports = []
+        self.removed_reports = []
         self.current_time = copy.deepcopy(report_generator.current_time)
         self._leftover_report = None
 
     def progress(self, d_time: timedelta) -> None:
         stop_time = self.current_time + d_time
+        self.new_reports = []
+        self.removed_reports = []
 
         if self._leftover_report is not None and self._leftover_report.time <= stop_time:
             self.current_reports.append(self._leftover_report)
+            self.new_reports.append(self._leftover_report)
             self._leftover_report = None
 
         while self._report_generator.current_time < stop_time:
@@ -269,16 +273,24 @@ class WeatherReportSimulator:
             if new_report is not None:
                 if new_report.time <= stop_time:
                     self.current_reports.append(new_report)
+                    self.new_reports.append(new_report)
                 else:
                     self._leftover_report = new_report
 
         while len(self.current_reports) > 0 and self.current_reports[0].time < stop_time - self.keep_time:
-            self.current_reports.popleft()
+            removed = self.current_reports.popleft()
+            self.removed_reports.append(removed)
 
         self.current_time = stop_time
 
+    def flight_time(self):
+        return self._report_generator._flight_sim.average_time.seconds
+
+    def report_time(self):
+        return self._report_generator._average_report_time.seconds
+
     @classmethod
-    def get_default(cls):
+    def get_simulator(cls, flight_time: float=20, report_time: float=10):
         tke = Dataset(definitions.TKE_DIR, 'r')
         uwnd = Dataset(definitions.UWND_DIR, 'r')
         vwnd = Dataset(definitions.VWND_DIR, 'r')
@@ -289,10 +301,10 @@ class WeatherReportSimulator:
         reg2 = pickle.load(open(definitions.INDEX_2_REGRESSION_DIR, 'rb'))
         index_predictor = IndexPredictor(tke['lat'], tke['lon'], reg1, reg2)
         weather_model = WeatherModel(tke, uwnd, vwnd, hgt, index_predictor)
-        flight_generator = FlightsGenerator(start_time, timedelta(seconds=20))
+        flight_generator = FlightsGenerator(start_time, timedelta(seconds=flight_time))
         flight_simulator = FlightsSimulator(flight_generator)
         flight_simulator.progress(timedelta(hours=3))
-        report_generator = WeatherReportGenerator(flight_simulator, weather_model, timedelta(seconds=10))
+        report_generator = WeatherReportGenerator(flight_simulator, weather_model, timedelta(seconds=report_time))
         return WeatherReportSimulator(report_generator, timedelta(hours=1))
 
 
@@ -314,43 +326,3 @@ def weighted_random(distribution: dict):
             return x
         if i == len(distribution):
             return x
-
-
-"""
-tke = Dataset(definitions.TKE_DIR, 'r')
-uwnd = Dataset(definitions.UWND_DIR, 'r')
-vwnd = Dataset(definitions.VWND_DIR, 'r')
-hgt = Dataset(definitions.HGT_DIR, 'r')
-start_time = datetime(year=1800, month=1, day=1, hour=0, minute=0, second=0)\
-             + timedelta(hours=tke['time'][0]) - timedelta(hours=3)
-
-reg1 = pickle.load(open(definitions.INDEX_1_REGRESSION_DIR, 'rb'))
-reg2 = pickle.load(open(definitions.INDEX_2_REGRESSION_DIR, 'rb'))
-index_predictor = IndexPredictor(tke['lat'], tke['lon'], reg1, reg2)
-weather_model = WeatherModel(tke, uwnd, vwnd, hgt, index_predictor)
-flight_generator = FlightsGenerator(start_time, timedelta(seconds=20))
-flight_simulator = FlightsSimulator(flight_generator)
-flight_simulator.progress(timedelta(hours=3))
-report_generator = WeatherReportGenerator(flight_simulator, weather_model, timedelta(seconds=10))
-report_simulator = WeatherReportSimulator(report_generator, timedelta(hours=1))
-start = time.time()
-report_simulator.progress(timedelta(hours=2))
-for report in report_simulator.current_reports:
-    print(report)
-print(len(report_simulator.current_reports))
-
-plt.ion()
-fig = plt.figure()
-ax = fig.add_subplot(111)
-
-while True:
-    ax.clear()
-    locations = [flight_simulator.get_location(f) for f in flight_simulator.active_flights]
-    print(len(locations))
-    ax.scatter([l[1] for l in locations], [l[0] for l in locations], s=0.5)
-    ax.scatter([-84.38, -80.2, -118.25, -122.32, -157.82, -145.9, -74], [33.75, 25.77, 34.05, 47.6, 21.3, 61.2, 40.8], s=2, c='r')
-    plt.xlim(-170, -60)
-    plt.ylim(10, 70)
-    fig.canvas.draw()
-    flight_simulator.progress(60)
-"""

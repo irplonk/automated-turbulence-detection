@@ -4,8 +4,9 @@ from . import views
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('make_db/', views.make_db, name='make_db'),
-    path('del_db/', views.del_db, name='del_db'),
+    # path('make_db/', views.make_db, name='make_db'),
+    # path('del_db/', views.del_db, name='del_db'),
+    path('simulation/', views.SimulationView.as_view(), name='simulation'),
     path('airplanes/', views.airplanes, name='airplanes'),
     path('airports/', views.airports, name='airports'),
     path('reports/', views.reports, name='reports'),
