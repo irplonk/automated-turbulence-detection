@@ -33,24 +33,37 @@ table, th, td {
     {% elif sim_state == 'paused' %}
       <input type="submit" name="pause" value="Resume"/>
     {% endif %}
-
+    <br>
+    <br>
     {% csrf_token %}
     {% if sim_state == 'stopped' %}
       <label for="id_flight_time">flight_time:</label>
       <input type="number" name="flight_time" value={{ cur_flight_time }} step="any" required id="flight_time"/>
+      <br>
+      <br>
       <label for="id_report_time">report_time:</label>
       <input type="number" name="report_time" value={{ cur_report_time }} step="any" required id="report_time"/>
+      <br>
+      <br>
       <label for="id_update_time">update_time:</label>
       <input type="number" name="update_time" value={{ update_time }} step="any" required id="update_time"/>
+      <br>
+      <br>
       <label for="id_time_per_update">time_per_update:</label>
       <input type="number" name="time_per_update" value={{ time_per_update }} step="any" required id="time_per_update"/>
     {% else %}
       <label for="id_flight_time">flight_time:</label>
       <input type="number" name="flight_time" value={{ cur_flight_time }} step="any" disabled id="flight_time"/>
+      <br>
+      <br>
       <label for="id_report_time">report_time:</label>
       <input type="number" name="report_time" value={{ cur_report_time }} step="any" disabled id="report_time"/>
+      <br>
+      <br>
       <label for="id_update_time">update_time:</label>
       <input type="number" name="update_time" value={{ update_time }} step="any" disabled id="update_time"/>
+      <br>
+      <br>
       <label for="id_time_per_update">time_per_update:</label>
       <input type="number" name="time_per_update" value={{ time_per_update }} step="any" disabled id="time_per_update"/>
     {% endif %}
