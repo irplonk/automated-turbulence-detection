@@ -23,7 +23,7 @@ table, th, td {
     {% elif sim_state == 'stopped' %}
       <input type="submit" name="start_stop" value="Start"/>
     {% elif sim_state == 'paused' %}
-      <input type="submit" name="start_stop" value="Stop" disabled/>
+      <input type="submit" name="start_stop" value="Stop"/>
     {% endif %}
 
     {% if sim_state == 'running' %}

@@ -242,9 +242,10 @@ class WeatherReportGenerator:
         self._flight_sim.progress(timedelta(seconds=dt))
         flight = self._flight_sim.active_flights[randint(0, len(self._flight_sim.active_flights) - 1)]
         cur_lat, cur_lon = self._flight_sim.get_location(flight)
-        tke, uwnd, vwnd = self._weather.get_weather(cur_lat, cur_lon, FLIGHT_HEIGHT, self.current_time)
-        if tke is None or uwnd is None or vwnd is None:
+        weather = self._weather.get_weather(cur_lat, cur_lon, FLIGHT_HEIGHT, self.current_time)
+        if weather is None:
             return None
+        tke, uwnd, vwnd = weather
         return WeatherReport(self.current_time, flight.plane, cur_lat, cur_lon, uwnd, vwnd, FLIGHT_HEIGHT, tke)
 
 
@@ -291,16 +292,13 @@ class WeatherReportSimulator:
 
     @classmethod
     def get_simulator(cls, flight_time: float=20, report_time: float=10):
-        tke = Dataset(definitions.TKE_DIR, 'r')
-        uwnd = Dataset(definitions.UWND_DIR, 'r')
-        vwnd = Dataset(definitions.VWND_DIR, 'r')
-        hgt = Dataset(definitions.HGT_DIR, 'r')
+        data = Dataset(definitions.WEATHER_DATA_DIR, 'r')
         start_time = datetime(year=1800, month=1, day=1, hour=0, minute=0, second=0) \
-                     + timedelta(hours=tke['time'][0]) - timedelta(hours=3)
+                     + timedelta(hours=data['time'][0]) - timedelta(hours=3)
         reg1 = pickle.load(open(definitions.INDEX_1_REGRESSION_DIR, 'rb'))
         reg2 = pickle.load(open(definitions.INDEX_2_REGRESSION_DIR, 'rb'))
-        index_predictor = IndexPredictor(tke['lat'], tke['lon'], reg1, reg2)
-        weather_model = WeatherModel(tke, uwnd, vwnd, hgt, index_predictor)
+        index_predictor = IndexPredictor(data['lat'], data['lon'], reg1, reg2)
+        weather_model = WeatherModel(data, data, data, data, index_predictor)
         flight_generator = FlightsGenerator(start_time, timedelta(seconds=flight_time))
         flight_simulator = FlightsSimulator(flight_generator)
         flight_simulator.progress(timedelta(hours=3))

@@ -32,7 +32,8 @@ class SimulationView(TemplateView):
     def post(self, request: HttpRequest) -> HttpResponse:
         form = SimulationForm(request.POST)
         if 'start_stop' in request.POST:
-            if SimulationView.sim_state == 'running':
+            if SimulationView.sim_state in ['running', 'paused']:
+                SimulationView.simulation_thread.unpause()
                 if SimulationView.simulation_thread is not None:
                     SimulationView.simulation_thread.stop()
                 SimulationView.simulation_thread = None
@@ -58,7 +59,7 @@ class SimulationView(TemplateView):
             'cur_flight_time': 10,
             'cur_report_time': 20,
             'update_time': 1,
-            'time_per_update': 300,
+            'time_per_update': 100,
             'sim_state':SimulationView.sim_state})
 
 class SimulationThread(threading.Thread):
