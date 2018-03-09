@@ -59,6 +59,3 @@ typings/
 
 # Compiled python files
 *.pyc
-
-# Large weather data files
-*.nc
