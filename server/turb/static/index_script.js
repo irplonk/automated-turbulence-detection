@@ -146,6 +146,28 @@ function initMap() {
   overlay = new USGSOverlay(bounds, srcImage, map);
 }
 
+function makeQuery(max, start, table) {
+    var xhttp = new XMLHttpRequest();
+    var url = "http://127.0.0.1:8000/query";
+    var params = "?max=" + max + "&start=" + start + "&table=" + table;
+    url = url + params;
+    xhttp.open("GET", url, true);
+    xhttp.send();
+    xhttp.onreadystatechange = function() {
+        if (xhttp.readyState === 4 && xhttp.status === 200) {
+            var response = JSON.parse(xhttp.response);
+            for (i = 0; i < response.entries.length; i++) {
+              var myLatLng = new google.maps.LatLng(response.entries[i].latitude, response.entries[i].longitude);
+              var marker = new google.maps.Marker({
+                position: myLatLng,
+                title:response.entries[i].id
+              });
+              marker.setMap(map);
+            }
+        }
+    }
+}
+
 function toggleHeatmap() {
  heatmap.setMap(heatmap.getMap() ? null : map);
 }
