@@ -1,8 +1,11 @@
 from __future__ import unicode_literals
 from django.shortcuts import render
-from django.http import HttpResponse, HttpRequest
+from django.http import HttpResponse, HttpRequest, JsonResponse
 from django.views.generic import TemplateView
 from django import forms
+from django.core import serializers
+from django.utils import timezone
+from django.forms.models import model_to_dict
 from .models import *
 from datetime import datetime, timedelta
 import random
@@ -11,7 +14,6 @@ from multiprocessing.dummy import Process
 import threading
 import time
 from datetime import timedelta
-from django.utils import timezone
 import pytz
 
 class SimulationForm(forms.Form):
@@ -134,20 +136,56 @@ def add_report(report: Simulator.WeatherReport):
         wind_y=report.wind_y,
         tke=report.tke).save()
 
+def display(request: HttpRequest) -> HttpResponse:
+    max_entries = safe_cast(request.GET.get('max', -1), int, -1)
+    start_index = safe_cast(request.GET.get('start', 0), int, 0)
+    table_name = request.GET.get('table', '')
+
+    if table_name == 'airplanes':
+        entries = Aircraft.objects.all()
+        db_attrs = ['aircraft_type', 'weight']
+    elif table_name == 'airports':
+        entries = Airport.objects.all()
+        db_attrs = ['airport_code', 'airport_name']
+    elif table_name == 'reports':
+        entries = WeatherReport.objects.all()
+        db_attrs = ['time', 'latitude', 'longitude', 'altitude', 'aircraft_type',
+                    'wind_x', 'wind_y', 'tke']
+    else:
+        return HttpResponse('Invalid table name {}'.format(table_name))
+    if max_entries < 0:
+        return render(request, 'display_db.html.html',
+            {'entries': [[getattr(e, attr) for attr in db_attrs] for e in entries[start_index:]],
+            'db_attrs': db_attrs})
+    else:
+        return render(request, 'display_db.html',
+            {'entries': [[getattr(e, attr) for attr in db_attrs] for e in entries[start_index:start_index + max_entries]],
+            'db_attrs': db_attrs})
+
+def query(request: HttpRequest) -> HttpResponse:
+    max_entries = safe_cast(request.GET.get('max', -1), int, -1)
+    start_index = safe_cast(request.GET.get('start', 0), int, 0)
+    table_name = request.GET.get('table', '')
+
+    if table_name == 'airplanes':
+        entries = Aircraft.objects.all()
+    elif table_name == 'airports':
+        entries = Airport.objects.all()
+    elif table_name == 'reports':
+        entries = WeatherReport.objects.all()
+    else:
+        return JsonResponse({"entries": []})
+
+    if max_entries < 0:
+        return JsonResponse({"entries": [model_to_dict(r) for r in entries[start_index:]]})
+    else:
+        return JsonResponse({"entries": [model_to_dict(r) for r in entries[start_index:start_index + max_entries]]})
+
 def index(request: HttpRequest) -> HttpResponse:
     return render(request, 'index.html', {})
 
-def airplanes(request: HttpRequest) -> HttpResponse:
-    return render(request, 'airplanes.html',
-        {'airplanes': Aircraft.objects.all()})
-
-def airports(request: HttpRequest) -> HttpResponse:
-    return render(request, 'airports.html',
-        {'airports': Airport.objects.all()})
-
-def reports(request: HttpRequest) -> HttpResponse:
-    return reports_page(request, 1)
-
-def reports_page(request: HttpRequest, page_num: int) -> HttpResponse:
-    return render(request, 'reports.html',
-        {'reports': WeatherReport.objects.all()[100*(page_num-1):100*page_num]})
+def safe_cast(val, typ, default):
+    try:
+        return typ(val)
+    except ValueError:
+        return default
