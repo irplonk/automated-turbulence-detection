@@ -130,11 +130,7 @@ def add_aircraft(aircraft: Simulator.Aircraft) -> Aircraft:
         return model
 
 def add_airport(airport: Simulator.Airport) -> Airport:
-    in_db = Airport.objects.filter(airport_code=airport.code,
-                                   airport_name=airport.name,
-                                   latitude=airport.lat,
-                                   longitude=airport.lon,
-                                   altitude=airport.alt)
+    in_db = Airport.objects.filter(airport_code=airport.code)
     if in_db.exists():
         return in_db[0]
     else:
@@ -188,7 +184,7 @@ def display(request: HttpRequest) -> HttpResponse:
         db_attrs = ['airport_code', 'latitude', 'longitude', 'altitude']
     elif table_name == 'flights':
         entries = Flight.objects.all()
-        db_attrs = ['start_time', 'latitude', 'longitude', 'altitude']
+        db_attrs = ['identifier', 'start_time', 'latitude', 'longitude', 'altitude']
     elif table_name == 'reports':
         entries = WeatherReport.objects.all()
         db_attrs = ['time', 'latitude', 'longitude', 'altitude',
