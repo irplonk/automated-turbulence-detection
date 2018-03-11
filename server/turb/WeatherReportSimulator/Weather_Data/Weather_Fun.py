@@ -67,6 +67,9 @@ class IndexPredictor:
             return None
         return best
 
+    def get_predictors(self):
+        return self.index_1_reg, self.index_2_reg
+
 
 class WeatherModel:
     """Wrapper class for weather file.

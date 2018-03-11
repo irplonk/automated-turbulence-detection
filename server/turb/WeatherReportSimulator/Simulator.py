@@ -15,78 +15,91 @@ import copy
 FLIGHT_HEIGHT = 6000
 
 class Aircraft:
-    def __init__(self, type: str, weight: float):
-        self.type = type
+    def __init__(self, name: str, weight: float):
+        self.name = name
         self.weight = weight
 
-    def __str__(self):
-        return '(' + str(self.type) + ', ' + str(self.weight) + ')'
+class Airport:
+    def __init__(self, code: str, name: str, lat: float, lon: float, alt: float):
+        self.code = code
+        self.name = name
+        self.lat = lat
+        self.lon = lon
+        self.alt = alt
 
+class Flight:
+    uid = 0
+
+    """Represents a flight.
+
+    Attributes:
+        origin (Airport): Starting location of the flight.
+        dest (Airport): Ending location of the flight.
+        start_time (datetime): Time the flight took off.
+        end_time (datetime): Time the flight landed.
+        plane (Aircraft): Plane type.
+        lat (float) Current flight Latitude.
+        lon (float) Current flight Longitude.
+        alt (float) Current flight altitude in meters.
+        identifier (str) Flight identifier.
+    """
+
+    def __init__(self, origin: Airport, dest: Airport, start_time: datetime,
+                 end_time: datetime, plane: Aircraft, lat: float, lon: float,
+                 alt: float):
+        """Creates a new flight with the given parameters.
+
+        :param plane: Plane type.
+        :param origin: Starting location of the flight.
+        :param dest: Ending location of the flight.
+        :param start_time: Time the flight took off.
+        :param end_time: Time the flight landed.
+        :param lat: Current flight Latitude
+        :param lon: Current flight Longitude
+        :param alt: Current flight altitude in meters
+        """
+        self.origin = origin
+        self.dest = dest
+        self.start_time = start_time
+        self.end_time = end_time
+        self.plane = plane
+        self.lat = lat
+        self.lon = lon
+        self.alt = alt
+        self.identifier = str(Flight.uid)
+        Flight.uid += 1
 
 class WeatherReport:
     """Represents a weather report sent by a plane.
 
     Attributes:
         time (datetime): Time the weather report was received at.
+        flight (Flight): Flight that sent the weather report.
         lat (float): Latitude the weather report was sent at.
         lon (float): Longitude the weather report was sent at.
-        level (float):
+        alt (float): Altitude the weather report was sent at in meters.
+        wind_x (float): Absolute zonal wind speed in m/s.
+        wind_y (float): Absolute meridional wind speed in m/s.
         tke (float): Ambient turbulent kinetic energy in J/kg.
     """
 
-    def __init__(self, time: datetime, aircraft: Aircraft, lat: float, lon: float, wind_x: float, wind_y: float,
-                 altitude: float, tke: float):
+    def __init__(self, time: datetime, flight: Flight, lat: float, lon: float,
+                alt: float, wind_x: float, wind_y: float, tke: float):
         """
         :param time: Time the weather report was received at.
         :param lat: Longitude the weather report was created at.
         :param lon: Longitude the weather report was created at.
-        :param level:
+        :param alt: Altitude the weather report was created at.
         :param tke: Ambient turbulent kinetic energy in J/kg.
         """
         self.time = time
-        self.aircraft = aircraft
+        self.flight = flight
         self.lat = lat
         self.lon = lon
-        self.altitude = altitude
+        self.alt = alt
         self.wind_x = wind_x
         self.wind_y = wind_y
         self.tke = tke
-
-    def __str__(self):
-        return ', '.join([self.time.strftime('%H:%M.%S'), str(self.aircraft), str(self.lat), str(self.lon),
-                          str(self.altitude), str(self.wind_x), str(self.wind_y), str(self.tke)])
-
-
-class Flight:
-    """Represents a flight.
-
-    Attributes:
-        start (str): Starting location of the flight.
-        end (str): Ending location of the flight.
-        start_time (datetime): Time the flight took off.
-        end_time (datetime): Time the flight landed.
-        plane_type (str): Plane type.
-    """
-
-    def __init__(self, start: str, end: str, start_time: datetime, end_time: datetime, plane: Aircraft):
-        """Creates a new flight with the given parameters.
-
-        :param plane: Plane type.
-        :param start: Starting location of the flight.
-        :param end: Ending location of the flight.
-        :param start_time: Time the flight took off.
-        :param end_time: Time the flight landed.
-
-        """
-        self.start = start
-        self.end = end
-        self.start_time = start_time
-        self.end_time = end_time
-        self.plane = plane
-
-    def __str__(self):
-        return ', '.join([str(self.start), str(self.end), self.start_time.strftime('%H:%M.%S'), str(self.plane)])
-
 
 class FlightsGenerator:
     """Generates flights randomly starting at a given time with a given frequency.
@@ -122,10 +135,14 @@ class FlightsGenerator:
         origin = weighted_random(self._origin_probabilities)
         dest = weighted_random(self._conditional_probabilities[origin])
         plane_type = weighted_random(self._plane_probabilities)
-        start_lat, start_lon, _ = self._airport_info[origin]
-        end_lat, end_lon, _ = self._airport_info[dest]
+        start_lat, start_lon, start_alt = self._airport_info[origin]
+        end_lat, end_lon, end_alt = self._airport_info[dest]
         flight_time = vincenty((start_lat, start_lon), (end_lat, end_lon)).meters / flight_speed
-        return Flight(origin, dest, self.current_time, self.current_time + timedelta(seconds=flight_time), plane_type)
+        return Flight(Airport(origin, origin, start_lat, start_lon, start_alt),
+                      Airport(dest, dest, end_lat, end_lon, end_alt),
+                      self.current_time,
+                     self.current_time + timedelta(seconds=flight_time),
+                     plane_type, 0, 0, FLIGHT_HEIGHT)
 
 
 class FlightsSimulator:
@@ -174,15 +191,13 @@ class FlightsSimulator:
         if flight not in self.active_flights:
             return None
         else:
-            info_start = self._airport_info[flight.start]
-            if info_start is None:
-                return None
-            lat_start, lon_start, alt_start = info_start
+            lat_start = flight.origin.lat
+            lon_start = flight.origin.lon
+            alt_start = flight.origin.alt
 
-            info_end = self._airport_info[flight.end]
-            if info_end is None:
-                return None
-            lat_end, lon_end, alt_end = info_end
+            lat_end = flight.dest.lat
+            lon_end = flight.dest.lon
+            alt_end = flight.dest.alt
 
             percent_complete = (self.current_time - flight.start_time) / (flight.end_time - flight.start_time)
 
@@ -207,7 +222,8 @@ class FlightsSimulator:
             else:
                 cur_lon_shift = (-percent_complete * dif_b + lon_start_shift) % 360
             cur_lon = cur_lon_shift - 180
-
+            flight.lat = cur_lat
+            flight.lon = cur_lon
             return cur_lat, cur_lon
 
 
@@ -246,7 +262,8 @@ class WeatherReportGenerator:
         if weather is None:
             return None
         tke, uwnd, vwnd = weather
-        return WeatherReport(self.current_time, flight.plane, cur_lat, cur_lon, uwnd, vwnd, FLIGHT_HEIGHT, tke)
+        return WeatherReport(self.current_time, flight, cur_lat, cur_lon,
+                             FLIGHT_HEIGHT, uwnd, vwnd, tke)
 
 
 class WeatherReportSimulator:
@@ -295,9 +312,12 @@ class WeatherReportSimulator:
         data = Dataset(definitions.WEATHER_DATA_DIR, 'r')
         start_time = datetime(year=1800, month=1, day=1, hour=0, minute=0, second=0) \
                      + timedelta(hours=data['time'][0]) - timedelta(hours=3)
-        reg1 = pickle.load(open(definitions.INDEX_1_REGRESSION_DIR, 'rb'))
-        reg2 = pickle.load(open(definitions.INDEX_2_REGRESSION_DIR, 'rb'))
-        index_predictor = IndexPredictor(data['lat'], data['lon'], reg1, reg2)
+        try:
+            reg1, reg2 = pickle.load(open(definitions.INDEX_REGRESSION_DIR, 'rb'))
+            index_predictor = IndexPredictor(data['lat'], data['lon'], reg1, reg2)
+        except:
+            index_predictor = IndexPredictor(data['lat'], data['lon'])
+            pickle.dump(index_predictor.get_predictors(), open(definitions.INDEX_REGRESSION_DIR, 'wb'))
         weather_model = WeatherModel(data, data, data, data, index_predictor)
         flight_generator = FlightsGenerator(start_time, timedelta(seconds=flight_time))
         flight_simulator = FlightsSimulator(flight_generator)

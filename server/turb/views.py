@@ -77,9 +77,11 @@ class SimulationThread(threading.Thread):
         self._unpause_event.set()
 
     def run(self):
-        keep_time = timedelta(hours=1)
+        keep_time = timedelta(hours=2)
         WeatherReport.objects.all().delete()
+        Flight.objects.all().delete()
         Aircraft.objects.all().delete()
+        Airport.objects.all().delete()
         model_aircrafts = {}
         while not self.stopped():
             self._unpause_event.wait()
@@ -117,50 +119,94 @@ class SimulationThread(threading.Thread):
     def paused(self):
         return self._pause_event.is_set()
 
-def add_report(report: Simulator.WeatherReport):
-    if Aircraft.objects.filter(aircraft_type=report.aircraft.type,
-        weight=report.aircraft.weight).exists():
-        model_aircraft = Aircraft.objects.filter(aircraft_type=report.aircraft.type,
-            weight=report.aircraft.weight)[0]
+def add_aircraft(aircraft: Simulator.Aircraft) -> Aircraft:
+    in_db = Aircraft.objects.filter(aircraft_type=aircraft.name,
+                                    weight=aircraft.weight)
+    if in_db.exists():
+        return in_db[0]
     else:
-        model_aircraft = Aircraft(aircraft_type=report.aircraft.type,
-            weight=report.aircraft.weight)
-        model_aircraft.save()
-    WeatherReport(
-        time=report.time.replace(tzinfo=pytz.UTC),
-        latitude=report.lat,
-        longitude=report.lon,
-        altitude=report.altitude,
-        aircraft_type=model_aircraft,
-        wind_x=report.wind_x,
-        wind_y=report.wind_y,
-        tke=report.tke).save()
+        model = Aircraft(aircraft_type=aircraft.name, weight=aircraft.weight)
+        model.save()
+        return model
+
+def add_airport(airport: Simulator.Airport) -> Airport:
+    in_db = Airport.objects.filter(airport_code=airport.code,
+                                   airport_name=airport.name,
+                                   latitude=airport.lat,
+                                   longitude=airport.lon,
+                                   altitude=airport.alt)
+    if in_db.exists():
+        return in_db[0]
+    else:
+        model = Airport(airport_code=airport.code, airport_name=airport.name,
+                        latitude=airport.lat, longitude=airport.lon,
+                        altitude=airport.alt)
+        model.save()
+        return model
+
+def add_flight(flight: Simulator.Flight) -> Flight:
+    origin = add_airport(flight.origin)
+    dest = add_airport(flight.dest)
+    aircraft = add_aircraft(flight.plane)
+    in_db = Flight.objects.filter(origin=origin, destination=dest,
+                                  identifier=flight.identifier)
+    if in_db.exists():
+        model = in_db[0]
+        model.latitude = flight.lat
+        model.longitude = flight.lon
+        model.altitude = flight.alt
+        model.save()
+        return model
+    else:
+        model = Flight(start_time=flight.start_time.replace(tzinfo=pytz.UTC),
+                       origin=origin, destination=dest, latitude=flight.lat,
+                       longitude=flight.lon, altitude=flight.alt,
+                       aircraft=aircraft, identifier=flight.identifier)
+        model.save()
+        return model
+
+def add_report(report: Simulator.WeatherReport) -> WeatherReport:
+    flight = add_flight(report.flight)
+    report = WeatherReport(time=report.time.replace(tzinfo=pytz.UTC),
+                           flight=flight, latitude=report.lat,
+                           longitude=report.lon, altitude=report.alt,
+                           wind_x=report.wind_x, wind_y=report.wind_y,
+                           tke=report.tke)
+    report.save()
+    return report
 
 def display(request: HttpRequest) -> HttpResponse:
     max_entries = safe_cast(request.GET.get('max', -1), int, -1)
     start_index = safe_cast(request.GET.get('start', 0), int, 0)
     table_name = request.GET.get('table', '')
 
-    if table_name == 'airplanes':
+    if table_name == 'aircraft':
         entries = Aircraft.objects.all()
         db_attrs = ['aircraft_type', 'weight']
     elif table_name == 'airports':
         entries = Airport.objects.all()
-        db_attrs = ['airport_code', 'airport_name']
+        db_attrs = ['airport_code', 'latitude', 'longitude', 'altitude']
+    elif table_name == 'flights':
+        entries = Flight.objects.all()
+        db_attrs = ['start_time', 'latitude', 'longitude', 'altitude']
     elif table_name == 'reports':
         entries = WeatherReport.objects.all()
-        db_attrs = ['time', 'latitude', 'longitude', 'altitude', 'aircraft_type',
+        db_attrs = ['time', 'latitude', 'longitude', 'altitude',
                     'wind_x', 'wind_y', 'tke']
     else:
         return HttpResponse('Invalid table name {}'.format(table_name))
     if max_entries < 0:
-        return render(request, 'display_db.html.html',
-            {'entries': [[getattr(e, attr) for attr in db_attrs] for e in entries[start_index:]],
-            'db_attrs': db_attrs})
+        entries = [[getattr(e, attr) for attr in db_attrs] for e in entries[start_index:]]
     else:
-        return render(request, 'display_db.html',
-            {'entries': [[getattr(e, attr) for attr in db_attrs] for e in entries[start_index:start_index + max_entries]],
-            'db_attrs': db_attrs})
+        entries = [[getattr(e, attr) for attr in db_attrs] for e in entries[start_index:start_index + max_entries]]
+
+    return render(request, 'display_db.html',
+        {'entries': entries,
+        'db_attrs': db_attrs,
+        'table': table_name,
+        'max_entries': max_entries,
+        'start_index': start_index,
+        'end_index': start_index + len(entries) - 1})
 
 def query(request: HttpRequest) -> HttpResponse:
     max_entries = safe_cast(request.GET.get('max', -1), int, -1)
