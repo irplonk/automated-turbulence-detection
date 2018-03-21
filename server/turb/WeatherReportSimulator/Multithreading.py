@@ -57,6 +57,8 @@ class SimulationThread(threading.Thread):
             self._unpause_event.wait()
             start = time.time()
             self.sim.progress(timedelta(seconds=self.time_per_update))
+            for flight in self.sim.current_flights():
+                update_flight(flight)
             for report in self.sim.new_reports:
                 add_report(report)
             n = 0

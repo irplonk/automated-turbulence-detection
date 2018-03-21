@@ -18,6 +18,7 @@ class Aircraft:
     def __init__(self, name: str, weight: float):
         self.name = name
         self.weight = weight
+        self.db_id = None
 
 class Airport:
     def __init__(self, code: str, name: str, lat: float, lon: float, alt: float):
@@ -26,6 +27,7 @@ class Airport:
         self.lat = lat
         self.lon = lon
         self.alt = alt
+        self.db_id = None
 
 class Flight:
     uid = 0
@@ -68,6 +70,7 @@ class Flight:
         self.alt = alt
         self.identifier = str(Flight.uid)
         Flight.uid += 1
+        self.db_id = None
 
 class WeatherReport:
     """Represents a weather report sent by a plane.
@@ -100,6 +103,7 @@ class WeatherReport:
         self.wind_x = wind_x
         self.wind_y = wind_y
         self.tke = tke
+        self.db_id = None
 
 class FlightsGenerator:
     """Generates flights randomly starting at a given time with a given frequency.
@@ -159,7 +163,7 @@ class FlightsSimulator:
         self._leftover_flight = None
         self._airport_info = airport_info()
 
-    def progress(self, d_time: timedelta) -> None:
+    def progress(self, d_time: timedelta):
         """Moves the simulation forward for the given time.
 
         :param d_time: How far ahead to progress the simulation in seconds.
@@ -185,6 +189,8 @@ class FlightsSimulator:
                 new_active_flights.append(flight)
 
         self.active_flights = new_active_flights
+        for flight in self.active_flights:
+            flight.lat, flight.lon = self.get_location(flight)
         self.current_time = stop_time
 
     def get_location(self, flight):
@@ -226,6 +232,8 @@ class FlightsSimulator:
             flight.lon = cur_lon
             return cur_lat, cur_lon
 
+    def current_flights(self):
+        return self.active_flights
 
 class WeatherReportGenerator:
     """Simulates generation of weather reports using a given flight simulator, weather model,
@@ -265,6 +273,8 @@ class WeatherReportGenerator:
         return WeatherReport(self.current_time, flight, cur_lat, cur_lon,
                              FLIGHT_HEIGHT, uwnd, vwnd, tke)
 
+    def current_flights(self):
+        return self._flight_sim.current_flights()
 
 class WeatherReportSimulator:
     def __init__(self, report_generator: WeatherReportGenerator, keep_time: timedelta):
@@ -306,6 +316,9 @@ class WeatherReportSimulator:
 
     def report_time(self):
         return self._report_generator._average_report_time.seconds
+
+    def current_flights(self):
+        return self._report_generator.current_flights()
 
     @classmethod
     def get_simulator(cls, flight_time: float=20, report_time: float=10, parallel: bool=False):

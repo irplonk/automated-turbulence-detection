@@ -19,12 +19,12 @@ class Airport(models.Model):
 class Flight(models.Model):
     id = models.AutoField(primary_key=True)
     start_time = models.DateTimeField()
-    origin = models.ForeignKey(Airport, on_delete=models.PROTECT, related_name="origin")
-    destination = models.ForeignKey(Airport, on_delete=models.PROTECT, related_name="dest")
+    origin = models.ForeignKey(Airport, on_delete=models.CASCADE, related_name="origin")
+    destination = models.ForeignKey(Airport, on_delete=models.CASCADE, related_name="dest")
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
     altitude = models.DecimalField(max_digits=9, decimal_places=1)
-    aircraft = models.ForeignKey(Aircraft, on_delete=models.PROTECT)
+    aircraft = models.ForeignKey(Aircraft, on_delete=models.CASCADE)
     identifier = models.TextField()
 
 class WeatherReport(models.Model):
@@ -36,4 +36,4 @@ class WeatherReport(models.Model):
     wind_x = models.DecimalField(max_digits=9, decimal_places=6)
     wind_y = models.DecimalField(max_digits=9, decimal_places=6)
     tke = models.DecimalField(max_digits=6, decimal_places=4)
-    flight = models.ForeignKey(Flight, on_delete=models.PROTECT)
+    flight = models.ForeignKey(Flight, on_delete=models.CASCADE)
