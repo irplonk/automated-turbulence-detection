@@ -276,7 +276,7 @@ class WeatherReportSimulator:
         self.current_time = copy.deepcopy(report_generator.current_time)
         self._leftover_report = None
 
-    def progress(self, d_time: timedelta) -> None:
+    def progress(self, d_time: timedelta):
         stop_time = self.current_time + d_time
         self.new_reports = []
         self.removed_reports = []
@@ -308,8 +308,8 @@ class WeatherReportSimulator:
         return self._report_generator._average_report_time.seconds
 
     @classmethod
-    def get_simulator(cls, flight_time: float=20, report_time: float=10):
-        data = Dataset(definitions.WEATHER_DATA_DIR, 'r')
+    def get_simulator(cls, flight_time: float=20, report_time: float=10, parallel: bool=False):
+        data = Dataset(definitions.WEATHER_DATA_DIR, 'r', parallel=parallel)
         start_time = datetime(year=1800, month=1, day=1, hour=0, minute=0, second=0) \
                      + timedelta(hours=data['time'][0]) - timedelta(hours=3)
         try:
