@@ -39,7 +39,7 @@ class SimulationThreadManager:
         Flight.objects.all().delete()
         Aircraft.objects.all().delete()
         Airport.objects.all().delete()
-        for thread in self.threads:
+        for thread in self._threads:
             thread.start()
         self._running = True
 
@@ -47,7 +47,7 @@ class SimulationThreadManager:
         """Stops all of the threads held by this manager."""
         if self._stopped:
             return
-        for thread in self.threads:
+        for thread in self._threads:
             thread.stop()
         self._stopped = True
         self._running = False
@@ -56,7 +56,7 @@ class SimulationThreadManager:
         """Pauses all of the threads held by this manager."""
         if self._paused:
             return
-        for thread in self.threads:
+        for thread in self._threads:
             thread.pause()
         self._paused = True
 
@@ -64,7 +64,7 @@ class SimulationThreadManager:
         """Unpauses all of the threads held by this manager."""
         if not self._paused:
             return
-        for thread in self.threads:
+        for thread in self._threads:
             thread.unpause()
         self._paused = False
 
@@ -96,7 +96,7 @@ class SimulationThread(threading.Thread):
         self._report_time = report_time
         self._update_time = update_time
         self._time_per_update = time_per_update
-        self.sim = Simulator.WeatherReportSimulator.get_simulator(flight_time, report_time, parallel=parallel)
+        self._sim = Simulator.WeatherReportSimulator.get_simulator(flight_time, report_time, parallel=parallel)
         self._stop_event = threading.Event()
         self._unpause_event = threading.Event()
         self._unpause_event.set()
@@ -106,25 +106,25 @@ class SimulationThread(threading.Thread):
         """Starts this thread. Will continually run until stop method is called."""
         keep_time = timedelta(hours=2)
         self._running = True
-        while not self.stopped():
+        while not self.stopped:
             self._unpause_event.wait()
             start = time.time()
-            self.sim.progress(timedelta(seconds=self.time_per_update))
-            for flight in self.sim.current_flights():
+            self._sim.progress(timedelta(seconds=self._time_per_update))
+            for flight in self._sim.current_flights:
                 update_flight(flight)
-            for report in self.sim.new_reports:
+            for report in self._sim.new_reports:
                 add_report(report)
             n = 0
-            for report in WeatherReport.objects.filter(time__lte=(self.sim.current_time - keep_time).replace(tzinfo=pytz.UTC)).all():
+            for report in WeatherReport.objects.filter(time__lte=(self._sim.current_time - keep_time).replace(tzinfo=pytz.UTC)).all():
                 n += 1
                 report.delete()
-            print(str(len(self.sim.new_reports)) + ' new reports')
+            print(str(len(self._sim.new_reports)) + ' new reports')
             print(str(n) + ' removed reports')
             dif = time.time() - start
-            if dif < self.update_time:
+            if dif < self._update_time:
                 time.sleep(self.update_time - dif)
             else:
-                print('simulation progressing ' + str(dif - self.update_time) + 's too slow')
+                print('simulation progressing ' + str(dif - self._update_time) + 's too slow')
 
     def stop(self):
         """Stops this thread. Cannot be started again once stopped."""

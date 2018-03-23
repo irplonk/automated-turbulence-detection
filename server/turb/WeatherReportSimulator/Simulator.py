@@ -129,8 +129,8 @@ class FlightsGenerator:
         :return: The next generated flight.
         """
         flight_speed = 245  # m / s
-        dt = np.random.gamma(self.average_time.seconds)
-        self.current_time = self.current_time + timedelta(seconds=dt)
+        dt = np.random.gamma(self._average_time.seconds)
+        self._current_time = self._current_time + timedelta(seconds=dt)
         origin = weighted_random(self._origin_probabilities)
         dest = weighted_random(self._conditional_probabilities[origin])
         plane_type = weighted_random(self._plane_probabilities)
@@ -202,7 +202,7 @@ class FlightsSimulator:
         :param flight: Flight to find the position of
         :return: Tuple containing the latitude and longitude of the given flight if it is active, otherwise None
         """
-        if flight not in self.active_flights:
+        if flight not in self._active_flights:
             return None
         else:
             lat_start = flight.origin.lat
@@ -240,6 +240,7 @@ class FlightsSimulator:
             flight.lon = cur_lon
             return cur_lat, cur_lon
 
+    @property
     def current_flights(self):
         """Gets the currently active flights.
 
@@ -280,7 +281,7 @@ class WeatherReportGenerator:
         dt = np.random.gamma(self._average_report_time.seconds)
         self._current_time = self.current_time + timedelta(seconds=dt)
         self._flight_sim.progress(timedelta(seconds=dt))
-        flight = self._flight_sim.active_flights[randint(0, len(self._flight_sim.active_flights) - 1)]
+        flight = self._flight_sim.current_flights[randint(0, len(self._flight_sim.current_flights) - 1)]
         cur_lat, cur_lon = self._flight_sim.get_location(flight)
         weather = self._weather.get_weather(cur_lat, cur_lon, FLIGHT_HEIGHT, self.current_time)
         if weather is None:
@@ -289,12 +290,13 @@ class WeatherReportGenerator:
         return WeatherReport(self.current_time, flight, cur_lat, cur_lon,
                              FLIGHT_HEIGHT, uwnd, vwnd, tke)
 
+    @property
     def current_flights(self):
         """Gets the currently active flights.
 
         :return: List of the current active flights.
         """
-        return self._flight_sim.current_flights()
+        return self._flight_sim.current_flights
 
     @property
     def flight_time(self):
@@ -317,22 +319,22 @@ class WeatherReportSimulator:
         self._keep_time = keep_time
         self._current_reports = deque()
         self._new_reports = []
-        self.removed_reports = []
+        self._removed_reports = []
         self._current_time = copy.deepcopy(report_generator.current_time)
         self._leftover_report = None
 
     def progress(self, d_time: timedelta):
         stop_time = self._current_time + d_time
         self._new_reports = []
-        self.removed_reports = []
+        self._removed_reports = []
 
         if self._leftover_report is not None and self._leftover_report.time <= stop_time:
-            self._current_time.append(self._leftover_report)
+            self._current_reports.append(self._leftover_report)
             self._new_reports.append(self._leftover_report)
             self._leftover_report = None
 
         while self._report_generator.current_time < stop_time:
-            new_report = self._current_time.next_report()
+            new_report = self._report_generator.next_report()
             if new_report is not None:
                 if new_report.time <= stop_time:
                     self._current_reports.append(new_report)
@@ -342,7 +344,7 @@ class WeatherReportSimulator:
 
         while len(self._current_reports) > 0 and self._current_reports[0].time < stop_time - self._keep_time:
             removed = self._current_reports.popleft()
-            self.removed_reports.append(removed)
+            self._removed_reports.append(removed)
 
         self._current_time = stop_time
 
@@ -362,12 +364,29 @@ class WeatherReportSimulator:
     def current_time(self):
         return self._current_time
 
+    @property
     def current_flights(self):
         """Gets the currently active flights.
 
-        :return: List of the current active flights.
+        :return: List of the current active flights
         """
-        return self._report_generator.current_flights()
+        return self._report_generator.current_flights
+
+    @property
+    def new_reports(self):
+        """Gets a list of new reports on this iteration.
+
+        :return: List of the reports generated on this progression
+        """
+        return self._new_reports
+
+    @property
+    def removed_reports(self):
+        """Gets a list of removed reports on this iteration.
+
+        :return: List of the reports removed on this progression
+        """
+        return self._removed_reports
 
     @classmethod
     def get_simulator(cls, flight_time: float=20, report_time: float=10, parallel: bool=False):
