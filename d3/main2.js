@@ -59,43 +59,12 @@ function ready(error, us, airports, turbEx) {
         .attr("class", "points")
         .attr("d", path);
 
-
+    console.log(turbEx)
     //another example of how to add data pts:
     aa = [-122.490402, 37.786453, 8];
     bb = [-102.389809, 37.72728,20];
-
-
     g.selectAll("circle")
         .data([aa,bb]).enter()
-        .append("circle")
-        .attr("fill", "red")
-        .attr("cx", function (d) { console.log(projection(d)); return projection(d)[0]; })
-        .attr("cy", function (d) { return projection(d)[1]; })
-        .attr("r", "8px")
-
-
-    //this is unfinished but this will be using the above but pulling from a json:
-    console.log(turbEx)
-    console.log(turbEx[1].Lon)
-    console.log(turbEx[1].Lat)
-    // g.selectAll("circle")
-    // //    .data([aa,bb]).enter()
-    //     .data(turbEx)
-    //     .enter()
-    //     .append('g')
-    //     .data(function(d){
-    //         return d.data;
-    //     })
-    //     .enter()
-    //     .append('circle')
-    //     .attr("fill", "red")
-    //     .attr("cx", function(d) {
-    //         return projection(d.Lon)[0];
-    //     })
-    //     .attr("cy", function(d) {
-    //         return projection(d.Lat)[1];
-    //     });
-
     //     .data.forEach(function(d){
     //         d.Source = d.Source;
     //         d.Lon = +d.Lon;
@@ -103,9 +72,9 @@ function ready(error, us, airports, turbEx) {
     //         d.Mag = +d.Mag;
     //
     // }).enter()
-    //     .append("circle")
-    //     .attr("fill", "red")s
-    //     updateLayers()
+        .append("circle")
+        .attr("fill", "red")
+    updateLayers()
 
 
 
