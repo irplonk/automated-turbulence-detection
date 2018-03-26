@@ -54,71 +54,23 @@ function ready(error, us, airports, turbEx) {
         .attr("d", path);
 
 
+
     g.append("path")
         .datum(topojson.feature(airports, airports.objects.airports))
         .attr("class", "points")
         .attr("d", path);
 
 
-    //another example of how to add data pts:
-    aa = [-122.490402, 37.786453, 8];
-    bb = [-102.389809, 37.72728,20];
-
-
     g.selectAll("circle")
-        .data([aa,bb]).enter()
+        .data(turbEx).enter()
         .append("circle")
         .attr("fill", "red")
-        .attr("cx", function (d) { console.log(projection(d)); return projection(d)[0]; })
-        .attr("cy", function (d) { return projection(d)[1]; })
-        .attr("r", "8px")
-
-
-    //this is unfinished but this will be using the above but pulling from a json:
-    console.log(turbEx)
-    console.log(turbEx[1].Lon)
-    console.log(turbEx[1].Lat)
-    // g.selectAll("circle")
-    // //    .data([aa,bb]).enter()
-    //     .data(turbEx)
-    //     .enter()
-    //     .append('g')
-    //     .data(function(d){
-    //         return d.data;
-    //     })
-    //     .enter()
-    //     .append('circle')
-    //     .attr("fill", "red")
-    //     .attr("cx", function(d) {
-    //         return projection(d.Lon)[0];
-    //     })
-    //     .attr("cy", function(d) {
-    //         return projection(d.Lat)[1];
-    //     });
-
-    //     .data.forEach(function(d){
-    //         d.Source = d.Source;
-    //         d.Lon = +d.Lon;
-    //         d.Lat = +d.Lat;
-    //         d.Mag = +d.Mag;
-    //
-    // }).enter()
-    //     .append("circle")
-    //     .attr("fill", "red")s
-    //     updateLayers()
-
-
-
-
+        .attr("cx", function (d) { return projection([d.Lat, d.Lon])[0]; })
+        .attr("cy", function (d) { return projection([d.Lat, d.Lon])[1]; })
+        .attr("r", function (d) { return d.Mag; })
+        .attr("opacity", "0.25")
 };
 
-function updateLayers() {
-    g.selectAll('circle')
-        .attr("cx", function (d) { return projection(d)[0].lon; })
-        .attr("cy", function (d) { return projection(d)[1].lat; })
-        .attr("r", function(d) {return d[2]+"px"})
-
-}
 
 function clicked(d) {
     if (active.node() === this) return reset();
