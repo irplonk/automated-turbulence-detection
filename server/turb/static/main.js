@@ -33,12 +33,11 @@ svg
     .call(zoom); // delete this line to disable free zooming
 // .call(zoom.event); // not in d3 v4
 d3.queue()
-    .defer(d3.json, "us.json")
-    .defer(d3.json, "airports.json")
-    .defer(d3.json, "turbEx.json")
-    .await(ready)
+    .defer(d3.json, "static/us.json")
+    .defer(d3.json, "static/airports.json")
+    .await(ready);
 
-function ready(error, us, airports, turbEx) {
+function ready(error, us, airports) {
     if (error) throw error;
 
     g.selectAll("path")
@@ -53,24 +52,53 @@ function ready(error, us, airports, turbEx) {
         .attr("class", "mesh")
         .attr("d", path);
 
+    // Uncomment to see all of the airports
+    // g.append("path")
+    //     .datum(topojson.feature(airports, airports.objects.airports))
+    //     .attr("class", "points")
+    //     .attr("d", path);
 
+    // Make call to retrieve turbulence data
+    makeQuery(5, 1, 'reports', makeTurbulence);
+}
 
-    g.append("path")
-        .datum(topojson.feature(airports, airports.objects.airports))
-        .attr("class", "points")
-        .attr("d", path);
+/**
+ * Makes call to retrieve information from server
+ * @param max the maximum number of rows of information to receive back
+ * @param start the starting index of information
+ * @param table the type of table from which to retrieve information
+ * @param callback the function to call with the response results
+ */
+function makeQuery(max, start, table, callback) {
+    var xhttp = new XMLHttpRequest();
+    var url = "http://127.0.0.1:8000/query";
+    var params = "?max=" + max + "&start=" + start + "&table=" + table;
+    url = url + params;
+    xhttp.onreadystatechange = processRequest;
+    function processRequest() {
+        if (xhttp.readyState === 4 && xhttp.status === 200) {
+            var response = JSON.parse(xhttp.response);
+            callback(response.entries);
+        }
+    }
+    xhttp.open("GET", url, true);
+    xhttp.send();
+}
 
-
+/**
+ * Adds turbulence information to the map
+ * @param reports the reports to be added
+ */
+function makeTurbulence(reports) {
     g.selectAll("circle")
-        .data(turbEx).enter()
+        .data(reports).enter()
         .append("circle")
-        .attr("fill", "red")
-        .attr("cx", function (d) { return projection([d.Lat, d.Lon])[0]; })
-        .attr("cy", function (d) { return projection([d.Lat, d.Lon])[1]; })
-        .attr("r", function (d) { return d.Mag; })
-        .attr("opacity", "0.25")
-};
-
+        .attr("fill", function (d) { return ((d.tke < 0.1) ? "green" : ( (d.tke < 0.3) ? "yellow" : "red")); })
+        .attr("cx", function (d) { return projection([d.longitude, d.latitude])[0]; })
+        .attr("cy", function (d) { return projection([d.longitude, d.latitude])[1]; })
+        .attr("r", 8)
+        .attr("opacity", 1.0)
+}
 
 function clicked(d) {
     if (active.node() === this) return reset();

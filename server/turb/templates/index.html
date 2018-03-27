@@ -1,26 +1,31 @@
-{% load static %}
 <!DOCTYPE html>
-<html>
-  <head>
-    <title>Simple Map</title>
-    <meta name="viewport" content="initial-scale=1.0">
-    <meta charset="utf-8">
-    <link rel="stylesheet" type="text/css" href="{% static "index_css.css" %}">
-  </head>
-  <body>
-    <div id="floating-panel">
-      <button id="toggleTurbulence" class="nice-button"
-        onclick="toggleHeatmap()">Toggle Turbulence</button>
-    </div>
-    <div id="map"></div>
-    <div id="infowindow-content">
-      <span id="place-name"  class="title"></span><br>
-      Place ID <span id="place-id"></span><br>
-      <span id="place-address"></span>
-    </div>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDUEWpnD8lB3k8bcG6yWPsSq3F1tCZ8RPw&callback=initMap&libraries=places,visualization"
-    async defer></script>
-    <script src="{% static "weather_data.js" %}"></script>
-    <script src="{% static "index_script.js" %}"></script>
-  </body>
-</html>
+<meta charset="utf-8">
+<style>
+
+    .background {
+        fill: none;
+        pointer-events: all;
+    }
+
+    .feature {
+        fill: #ccc;
+        cursor: pointer;
+    }
+
+    .feature.active {
+        fill: orange;
+    }
+
+    .mesh {
+        fill: none;
+        stroke: #fff;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+</style>
+<body>
+<script src="https://d3js.org/d3.v4.min.js"></script> <!-- Inclusion of d3 v4 -->
+<script src="https://d3js.org/topojson.v1.min.js"></script>
+
+<script src="../static/main.js"></script>
