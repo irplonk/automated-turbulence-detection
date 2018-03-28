@@ -122,7 +122,7 @@ class SimulationThread(threading.Thread):
             print(str(n) + ' removed reports')
             dif = time.time() - start
             if dif < self._update_time:
-                time.sleep(self.update_time - dif)
+                time.sleep(self._update_time - dif)
             else:
                 print('simulation progressing ' + str(dif - self._update_time) + 's too slow')
 
