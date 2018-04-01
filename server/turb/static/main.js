@@ -57,7 +57,7 @@ function ready(error, us, airports) {
     //     .attr("d", path);
 
     // Make call to retrieve turbulence data
-    makeQuery(5, 1, 'reports', makeTurbulence);
+    makeQuery(-1, 1, 'reports', makeTurbulence);
 }
 
 /**
@@ -70,7 +70,12 @@ function ready(error, us, airports) {
 function makeQuery(max, start, table, callback) {
     var xhttp = new XMLHttpRequest();
     var url = "http://127.0.0.1:8000/query";
-    var params = "?max=" + max + "&start=" + start + "&table=" + table;
+    var params;
+    if (max > 0) {
+      params = queryString({"max": max, "start": start, "table": table});
+    } else {
+      params = queryString({"start": start, "table": table});
+    }
     url = url + params;
     xhttp.onreadystatechange = processRequest;
     function processRequest() {
@@ -84,16 +89,38 @@ function makeQuery(max, start, table, callback) {
 }
 
 /**
+ * Generates a GET request string with the given arguments
+ * @param args dictionary with entries form name: value, where name is a GET
+               request argument name, and value is its value
+ */
+function queryString(args) {
+  var first = true;
+  var str = "";
+  for (var arg in args) {
+    if (first) {
+      first = false
+      str = str + "?" + arg + "=" + args[arg]
+    } else {
+      str = str + "&" + arg + "=" + args[arg]
+    }
+  }
+  return str
+}
+
+/**
  * Adds turbulence information to the map
  * @param reports the reports to be added
  */
 function makeTurbulence(reports) {
     g.selectAll("circle")
-        .data(reports).enter()
+        .data(
+          reports.map(r => [projection([r.longitude, r.latitude]), r.tke])
+                 .filter(a => a[0] !== null)
+        ).enter()
         .append("circle")
-        .attr("fill", function (d) { return ((d.tke < 0.1) ? "green" : ( (d.tke < 0.3) ? "yellow" : "red")); })
-        .attr("cx", function (d) { return projection([d.longitude, d.latitude])[0]; })
-        .attr("cy", function (d) { return projection([d.longitude, d.latitude])[1]; })
+        .attr("fill", function (x) { return ((x[1] < 0.1) ? "green" : ( (x[1] < 0.3) ? "yellow" : "red")); })
+        .attr("cx", function (x) { return x[0][0]; })
+        .attr("cy", function (x) { return x[0][1]; })
         .attr("r", 8)
         .attr("opacity", 1.0)
 }
