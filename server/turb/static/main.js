@@ -2,9 +2,11 @@ var width = 1000,
     height = 700,
     active = d3.select(null);
 
-var projection = d3.geoAlbersUsa() // updated for d3 v4
-    .scale(1000)
+var projection = d3.geoMercator() // updated for d3 v4
+    .scale((width - 3) / (2 * Math.PI))
     .translate([width / 2, height / 2]);
+    //.scale(1000)
+    //.translate([width / 2, height / 2]);
 
 var zoom = d3.zoom()
 // no longer in d3 v4 - zoom initialises with zoomIdentity, so it's already at origin
