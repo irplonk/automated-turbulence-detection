@@ -32,23 +32,21 @@ var g = svg.append("g");
 svg
     .call(zoom); // delete this line to disable free zooming
 // .call(zoom.event); // not in d3 v4
-d3.queue()
-    .defer(d3.json, "static/us.json")
-    .defer(d3.json, "static/airports.json")
-    .await(ready);
 
 function ready(error, us, airports) {
     if (error) throw error;
 
+    console.log(topojson.feature(us, us.features))
+
     g.selectAll("path")
-        .data(topojson.feature(us, us.objects.states).features)
+        .data(us.features)
         .enter().append("path")
         .attr("d", path)
         .attr("class", "feature")
         .on("click", clicked);
 
     g.append("path")
-        .datum(topojson.mesh(us, us.objects.states, function(a, b) { return a !== b; }))
+        .datum(topojson.mesh(us, us.features, function(a, b) { return a !== b; }))
         .attr("class", "mesh")
         .attr("d", path);
 
