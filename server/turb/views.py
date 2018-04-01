@@ -120,6 +120,8 @@ def query(request: HttpRequest) -> HttpResponse:
         entries = Airport.objects.all()
     elif table_name == 'reports':
         entries = WeatherReport.objects.all()
+    elif table_name == 'flights':
+        entries = Flight.objects.all()
     else:
         return JsonResponse({"entries": []})
 

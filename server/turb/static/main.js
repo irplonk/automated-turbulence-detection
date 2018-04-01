@@ -33,31 +33,53 @@ svg
     .call(zoom); // delete this line to disable free zooming
 // .call(zoom.event); // not in d3 v4
 
+
 function ready(error, us, airports) {
     if (error) throw error;
 
+    // Initialize data
+    setMapData(us, airports);
+    updateLiveData(true, true);
 
-    g.selectAll("path")
-        .data(us.features)
-        .enter().append("path")
-        .attr("d", path)
-        .attr("class", "feature");
-        //.on("click", clicked);
+    // Update data every 10 seconds
+    setInterval(function(){
+      updateLiveData(true, true)
+    }, 10000);
+}
 
-    g.append("path")
-        .datum(topojson.mesh(us, us.features, function(a, b) { return a !== b; }))
-        .attr("class", "mesh")
-        .attr("d", path);
+function setMapData(us, airports) {
+  g.selectAll("path")
+      .data(us.features)
+      .enter().append("path")
+      .attr("d", path)
+      .attr("class", "feature");
+
+  g.append("path")
+      .datum(topojson.mesh(us, us.features, function(a, b) { return a !== b; }))
+      .attr("class", "mesh")
+      .attr("d", path);
+
+  // Uncomment to see all of the airports
+  // g.append("path")
+  //     .datum(topojson.feature(airports, airports.objects.airports))
+  //     .attr("class", "points")
+  //     .attr("d", path);
+}
 
 
-    // Uncomment to see all of the airports
-    // g.append("path")
-    //     .datum(topojson.feature(airports, airports.objects.airports))
-    //     .attr("class", "points")
-    //     .attr("d", path);
-
-    // Make call to retrieve turbulence data
+/**
+ * Updates the live map data
+ * @param reports whether to add weather reports
+ * @param aircraft whether to add aircraft
+ */
+function updateLiveData(reports, aircraft) {
+  console.log("updateLiveData")
+  if (reports) {
     makeQuery(-1, 1, 'reports', makeTurbulence);
+  }
+  if (aircraft) {
+    makeQuery(-1, 1, 'flights', makeFlights);
+  }
 }
 
 /**
@@ -112,6 +134,7 @@ function queryString(args) {
  * @param reports the reports to be added
  */
 function makeTurbulence(reports) {
+  console.log('makeTurbulence')
     g.selectAll("circle")
         .data(
           reports.map(r => [projection([r.longitude, r.latitude]), r.tke])
@@ -122,6 +145,25 @@ function makeTurbulence(reports) {
         .attr("cx", function (x) { return x[0][0]; })
         .attr("cy", function (x) { return x[0][1]; })
         .attr("r", 8)
+        .attr("opacity", 1.0)
+}
+
+/**
+ * Adds flight data to the map
+ * @param flights the flights to be added
+ */
+function makeFlights(flights) {
+  console.log('makeFlights')
+    g.selectAll("circle")
+        .data(
+          flights.map(r => projection([r.longitude, r.latitude]))
+                 .filter(x => x !== null)
+        ).enter()
+        .append("circle")
+        .attr("fill", "black")
+        .attr("cx", function (x) { return x[0]; })
+        .attr("cy", function (x) { return x[1]; })
+        .attr("r", 1)
         .attr("opacity", 1.0)
 }
 
