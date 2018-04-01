@@ -3,10 +3,8 @@ var width = 1000,
     active = d3.select(null);
 
 var projection = d3.geoMercator() // updated for d3 v4
-    .scale((width - 3) / (2 * Math.PI))
-    .translate([width / 2, height / 2]);
-    //.scale(1000)
-    //.translate([width / 2, height / 2]);
+    .scale(2 * (width - 3) / (Math.PI))
+    .translate([1.5 * width, 1.125 * height]);
 
 var zoom = d3.zoom()
 // no longer in d3 v4 - zoom initialises with zoomIdentity, so it's already at origin
@@ -38,19 +36,19 @@ svg
 function ready(error, us, airports) {
     if (error) throw error;
 
-    console.log(topojson.feature(us, us.features))
 
     g.selectAll("path")
         .data(us.features)
         .enter().append("path")
         .attr("d", path)
-        .attr("class", "feature")
-        .on("click", clicked);
+        .attr("class", "feature");
+        //.on("click", clicked);
 
     g.append("path")
         .datum(topojson.mesh(us, us.features, function(a, b) { return a !== b; }))
         .attr("class", "mesh")
         .attr("d", path);
+
 
     // Uncomment to see all of the airports
     // g.append("path")
