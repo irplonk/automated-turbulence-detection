@@ -3,6 +3,10 @@ from .. import definitions
 
 
 def airport_statistics():
+    """Returns a tuple containing airport IATA codes, a dictionary containing their
+    probabilities of being the origin of a flight, and their conditional probabilities
+    for being the destination of a flight given the origin."""
+
     file = open(definitions.FLIGHTS_DIR, 'r')
     reader = csv.reader(file, delimiter=',')
 
@@ -46,10 +50,7 @@ def airport_statistics():
 
 
 def airport_info():
-    """Returns a dictionary from an airport to its latitude, longitude, and altitude in meters.
-
-    :return: A dictionary from an airport's IATA code to its latitude, longitude, and altitude.
-    """
+    """Returns a dictionary from an airport to its latitude, longitude, and altitude in meters."""
     file = open(definitions.AIRPORTS_DIR, 'r')
     reader = csv.reader(file, delimiter=',')
     airports = {row[0]: (float(row[1]), float(row[2]), float(row[3])) for row in reader}
