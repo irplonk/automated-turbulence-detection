@@ -130,6 +130,13 @@ function queryString(args) {
 }
 
 /**
+ * t in range of [0, 1]
+ */
+var colorScale = d3.scaleLinear()
+  .domain([0, 1]) //can change domain
+  .range(["yellow", "red"]);
+
+/**
  * Adds turbulence information to the map
  * @param reports the reports to be added
  */
