@@ -130,6 +130,7 @@ function queryString(args) {
 }
 
 /**
+ * Color scale yellow to red
  * t in range of [0, 1]
  */
 var colorScale = d3.scaleLinear()
