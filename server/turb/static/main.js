@@ -37,6 +37,9 @@ svg
 function ready(error, us, airports) {
     if (error) throw error;
 
+    // Creates a legend for the color scale
+    makeColorLegend(height - 40, width - 165, 150, 25, 0.75, colorScale);
+
     // Initialize data
     setMapData(us, airports);
     updateLiveData(true, true);
@@ -45,6 +48,27 @@ function ready(error, us, airports) {
     setInterval(function(){
       updateLiveData(true, true)
     }, 10000);
+}
+
+/**
+ * Creates a rectangular gradient color legend
+ * @param top top coordinate of the legend
+ * @param left left coordinate of the legend
+ * @param width width of the ledend
+ * @param height height of the legend
+ * @param maxVal maximum input value of the color function
+ * @param colorFun coloring function
+ */
+function makeColorLegend(top, left, width, height, maxVal, colorFun) {
+  var rects = svg.selectAll(".rects")
+    .data(d3.range(width))
+    .enter()
+    .append("rect")
+    .attr("y", top)
+    .attr("height", height)
+    .attr("x", (d, i) => left + i)
+    .attr("width", 2)
+    .attr("fill", d => colorFun(maxVal / width * d));
 }
 
 function setMapData(us, airports) {
@@ -149,7 +173,7 @@ function makeTurbulence(reports) {
                  .filter(a => a[0] !== null)
         ).enter()
         .append("circle")
-        .attr("fill", function (x) { return ((x[1] < 0.1) ? "green" : ( (x[1] < 0.3) ? "yellow" : "red")); })
+        .attr("fill", function (x) { return colorScale(x[1]); })
         .attr("cx", function (x) { return x[0][0]; })
         .attr("cy", function (x) { return x[0][1]; })
         .attr("r", 8)
