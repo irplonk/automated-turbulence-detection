@@ -1,53 +1,52 @@
 var width = 1000,
-    height = 700,
-    active = d3.select(null);
+  height = 700,
+  active = d3.select(null);
 
 var projection = d3.geoMercator() // updated for d3 v4
-    .scale(2 * (width - 3) / (Math.PI))
-    .translate([1.5 * width, 1.125 * height]);
+  .scale(2 * (width - 3) / (Math.PI))
+  .translate([1.5 * width, 1.125 * height]);
 
 var zoom = d3.zoom()
 // no longer in d3 v4 - zoom initialises with zoomIdentity, so it's already at origin
 // .translate([0, 0])
 // .scale(1)
-    .scaleExtent([1, 8])
-    .on("zoom", zoomed);
+  .scaleExtent([1, 8])
+  .on("zoom", zoomed);
 
 var path = d3.geoPath() // updated for d3 v4
-    .projection(projection);
+  .projection(projection);
 
 var svg = d3.select("body").append("svg")
-    .attr("width", width)
-    .attr("height", height)
-    .on("click", stopped, true);
+  .attr("width", width)
+  .attr("height", height)
+  .on("click", stopped, true);
 
 svg.append("rect")
-    .attr("class", "background")
-    .attr("width", width)
-    .attr("height", height)
-    .on("click", reset);
+  .attr("class", "background")
+  .attr("width", width)
+  .attr("height", height)
+  .on("click", reset);
 
 var g = svg.append("g");
 
-svg
-    .call(zoom); // delete this line to disable free zooming
+svg.call(zoom); // delete this line to disable free zooming
 // .call(zoom.event); // not in d3 v4
 
 
 function ready(error, us, airports) {
-    if (error) throw error;
+  if (error) throw error;
 
-    // Creates a legend for the color scale
-    makeColorLegend(height - 40, width - 165, 150, 25, 0.75, colorScale);
+  // Creates a legend for the color scale
+  makeColorLegend(height - 40, width - 165, 150, 25, 0.75, colorScale);
 
-    // Initialize data
-    setMapData(us, airports);
+  // Initialize data
+  setMapData(us, airports);
+  updateLiveData(true, true);
+
+  // Update data every 10 seconds
+  setInterval(function(){
     updateLiveData(true, true);
-
-    // Update data every 10 seconds
-    setInterval(function(){
-      updateLiveData(true, true)
-    }, 10000);
+  }, 10000);
 }
 
 /**
@@ -73,15 +72,15 @@ function makeColorLegend(top, left, width, height, maxVal, colorFun) {
 
 function setMapData(us, airports) {
   g.selectAll("path")
-      .data(us.features)
-      .enter().append("path")
-      .attr("d", path)
-      .attr("class", "feature");
+    .data(us.features)
+    .enter().append("path")
+    .attr("d", path)
+    .attr("class", "feature");
 
   g.append("path")
-      .datum(topojson.mesh(us, us.features, function(a, b) { return a !== b; }))
-      .attr("class", "mesh")
-      .attr("d", path);
+    .datum(topojson.mesh(us, us.features, function(a, b) { return a !== b; }))
+    .attr("class", "mesh")
+    .attr("d", path);
 
   // Uncomment to see all of the airports
   // g.append("path")
@@ -97,7 +96,7 @@ function setMapData(us, airports) {
  * @param aircraft whether to add aircraft
  */
 function updateLiveData(reports, aircraft) {
-  console.log("updateLiveData")
+  svg.selectAll("circle").remove();
   if (reports) {
     makeQuery(-1, 1, 'reports', makeTurbulence);
   }
@@ -114,24 +113,24 @@ function updateLiveData(reports, aircraft) {
  * @param callback the function to call with the response results
  */
 function makeQuery(max, start, table, callback) {
-    var xhttp = new XMLHttpRequest();
-    var url = "http://127.0.0.1:8000/query";
-    var params;
-    if (max > 0) {
-      params = queryString({"max": max, "start": start, "table": table});
-    } else {
-      params = queryString({"start": start, "table": table});
+  var xhttp = new XMLHttpRequest();
+  var url = "http://127.0.0.1:8000/query";
+  var params;
+  if (max > 0) {
+    params = queryString({"max": max, "start": start, "table": table});
+  } else {
+    params = queryString({"start": start, "table": table});
+  }
+  url = url + params;
+  xhttp.onreadystatechange = processRequest;
+  function processRequest() {
+    if (xhttp.readyState === 4 && xhttp.status === 200) {
+      var response = JSON.parse(xhttp.response);
+      callback(response.entries);
     }
-    url = url + params;
-    xhttp.onreadystatechange = processRequest;
-    function processRequest() {
-        if (xhttp.readyState === 4 && xhttp.status === 200) {
-            var response = JSON.parse(xhttp.response);
-            callback(response.entries);
-        }
-    }
-    xhttp.open("GET", url, true);
-    xhttp.send();
+  }
+  xhttp.open("GET", url, true);
+  xhttp.send();
 }
 
 /**
@@ -144,13 +143,13 @@ function queryString(args) {
   var str = "";
   for (var arg in args) {
     if (first) {
-      first = false
-      str = str + "?" + arg + "=" + args[arg]
+      first = false;
+      str = str + "?" + arg + "=" + args[arg];
     } else {
-      str = str + "&" + arg + "=" + args[arg]
+      str = str + "&" + arg + "=" + args[arg];
     }
   }
-  return str
+  return str;
 }
 
 /**
@@ -166,18 +165,17 @@ var colorScale = d3.scaleLinear()
  * @param reports the reports to be added
  */
 function makeTurbulence(reports) {
-  console.log('makeTurbulence')
-    g.selectAll("circle")
-        .data(
-          reports.map(r => [projection([r.longitude, r.latitude]), r.tke])
-                 .filter(a => a[0] !== null)
-        ).enter()
-        .append("circle")
-        .attr("fill", function (x) { return colorScale(x[1]); })
-        .attr("cx", function (x) { return x[0][0]; })
-        .attr("cy", function (x) { return x[0][1]; })
-        .attr("r", 8)
-        .attr("opacity", 1.0)
+  g.selectAll("circle")
+    .data(
+      reports.map(r => [projection([r.longitude, r.latitude]), r.tke])
+             .filter(a => a[0] !== null)
+    ).enter()
+    .append("circle")
+    .attr("fill", function (x) { return colorScale(x[1]); })
+    .attr("cx", function (x) { return x[0][0]; })
+    .attr("cy", function (x) { return x[0][1]; })
+    .attr("r", 8)
+    .attr("opacity", 1.0);
 }
 
 /**
@@ -185,18 +183,17 @@ function makeTurbulence(reports) {
  * @param flights the flights to be added
  */
 function makeFlights(flights) {
-  console.log('makeFlights')
-    g.selectAll("circle")
-        .data(
-          flights.map(r => projection([r.longitude, r.latitude]))
-                 .filter(x => x !== null)
-        ).enter()
-        .append("circle")
-        .attr("fill", "black")
-        .attr("cx", function (x) { return x[0]; })
-        .attr("cy", function (x) { return x[1]; })
-        .attr("r", 1)
-        .attr("opacity", 1.0)
+  g.selectAll("circle")
+    .data(
+      flights.map(r => projection([r.longitude, r.latitude]))
+             .filter(x => x !== null)
+    ).enter()
+    .append("circle")
+    .attr("fill", "black")
+    .attr("cx", function (x) { return x[0]; })
+    .attr("cy", function (x) { return x[1]; })
+    .attr("r", 1)
+    .attr("opacity", 1.0);
 }
 
 function clicked(d) {
@@ -223,9 +220,9 @@ function reset() {
     active = d3.select(null);
 
     svg.transition()
-        .duration(750)
-        // .call( zoom.transform, d3.zoomIdentity.translate(0, 0).scale(1) ); // not in d3 v4
-        .call( zoom.transform, d3.zoomIdentity ); // updated for d3 v4
+      .duration(750)
+      // .call( zoom.transform, d3.zoomIdentity.translate(0, 0).scale(1) ); // not in d3 v4
+      .call( zoom.transform, d3.zoomIdentity ); // updated for d3 v4
 }
 
 function zoomed() {
