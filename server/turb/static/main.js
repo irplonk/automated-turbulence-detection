@@ -224,7 +224,7 @@ var toolTip = d3.tip()
     .attr("class", "d3-tip")
     .offset([-12, 0])
     .html(function(d) {
-        return "<h5>"+d+"</h5>";
+        return "<h5>"+"Longitude: "+d[0] +"</h5>" + "<h5>" + "Latitude: " + d[1] +"<H5>";
     });
 
  svg.call(toolTip);
