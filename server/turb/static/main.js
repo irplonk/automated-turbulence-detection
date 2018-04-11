@@ -111,8 +111,8 @@ function setMapData(us, airports) {
 
 /**
  * Updates the live map data
- * @param reports whether to add weather reports
- * @param aircraft whether to add aircraft
+ * @param reports whether or not to add weather reports
+ * @param aircraft whether or not to add aircraft
  */
 function updateLiveData(reports, aircraft) {
   svg.selectAll("circle").remove();
@@ -181,7 +181,7 @@ var colorScale = d3.scaleLinear()
 
 /**
  * Adds turbulence information to the map
- * @param reports the reports to be added
+ * @param reports the weather reports to be displayed on the map
  */
 function makeTurbulence(reports) {
   g.selectAll("circle")
@@ -201,7 +201,7 @@ function makeTurbulence(reports) {
 
 /**
  * Adds flight data to the map
- * @param flights the flights to be added
+ * @param flights the aircraft flights to be displayed on the map
  */
 function makeFlights(flights) {
   g.selectAll("circle")
@@ -265,8 +265,8 @@ function zoomed() {
     g.attr("transform", d3.event.transform); // updated for d3 v4
 }
 
-// If the drag behavior prevents the default click,
-// also stop propagation so we don’t click-to-zoom.
+// If the drag behavior prevents the default clicks from passing through,
+// also stop propagation so click-to-zoom is not triggered.
 function stopped() {
     if (d3.event.defaultPrevented) d3.event.stopPropagation();
 }

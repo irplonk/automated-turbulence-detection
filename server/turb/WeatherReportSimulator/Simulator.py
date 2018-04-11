@@ -1,16 +1,18 @@
-from .Flight_Statistics.Statistics_Fun import airport_statistics, airport_info
 from datetime import datetime, timedelta
-from .Weather_Data.Weather_Fun import *
 from random import randint, uniform
 from netCDF4 import Dataset
-from . import definitions
-import numpy as np
-import matplotlib.pyplot as plt
+from geopy.distance import vincenty
 from geopy.distance import vincenty
 import time
 import pickle
 from collections import deque
 import copy
+import numpy as np
+import matplotlib.pyplot as plt
+from . import definitions
+from .Flight_Statistics.Statistics_Fun import airport_statistics, airport_info
+from .Weather_Data.Weather_Fun import *
+
 
 FLIGHT_HEIGHT = 6000
 
@@ -86,7 +88,7 @@ class WeatherReport:
     def __init__(self, time: datetime, flight: Flight, lat: float, lon: float,
                 alt: float, wind_x: float, wind_y: float, tke: float):
         """
-        :param time: Time the weather report was received at.
+        :param time: Date and time the weather report was received at.
         :param flight: Flight that created this weather report
         :param lat: Longitude the weather report was created at.
         :param lon: Longitude the weather report was created at.
@@ -218,23 +220,23 @@ class FlightsSimulator:
             lat_start_shift = lat_start + 90
             lat_end_shift = lat_end + 90
             cur_lat_shift = 0
-            dif_a = (lat_end_shift - lat_start_shift) % 180
-            dif_b = (lat_start_shift - lat_end_shift) % 180
-            if dif_a < dif_b:
-                cur_lat_shift = (percent_complete * dif_a + lat_start_shift) % 180
+            dif_end_minus_start = (lat_end_shift - lat_start_shift) % 180
+            dif_start_minus_end = (lat_start_shift - lat_end_shift) % 180
+            if dif_end_minus_start < dif_start_minus_end :
+                cur_lat_shift = (percent_complete * dif_end_minus_start + lat_start_shift) % 180
             else:
-                cur_lat_shift = (-percent_complete * dif_b + lat_start_shift) % 180
+                cur_lat_shift = (-percent_complete * dif_start_minus_end + lat_start_shift) % 180
             cur_lat = cur_lat_shift - 90
 
             lon_start_shift = lon_start + 180
             lon_end_shift = lon_end + 180
             cur_lon_shift = 0
-            dif_a = (lon_end_shift - lon_start_shift) % 360
-            dif_b = (lon_start_shift - lon_end_shift) % 360
-            if dif_a < dif_b:
-                cur_lon_shift = (percent_complete * dif_a + lon_start_shift) % 360
+            dif_end_minus_start = (lon_end_shift - lon_start_shift) % 360
+            dif_start_minus_end = (lon_start_shift - lon_end_shift) % 360
+            if dif_end_minus_start < dif_start_minus_end :
+                cur_lon_shift = (percent_complete * dif_end_minus_start + lon_start_shift) % 360
             else:
-                cur_lon_shift = (-percent_complete * dif_b + lon_start_shift) % 360
+                cur_lon_shift = (-percent_complete * dif_start_minus_end + lon_start_shift) % 360
             cur_lon = cur_lon_shift - 180
             flight.lat = cur_lat
             flight.lon = cur_lon

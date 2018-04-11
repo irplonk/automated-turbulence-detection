@@ -99,7 +99,7 @@ class WeatherModel:
         :param lat: Latitude of value to return.
         :param lon: Longitude of value to return.
         :param height: Height in meters.
-        :param time: Time of value to return.
+        :param time: Date and time of value to return.
         :return: tke, uwnd and vwnd at the given coordinates.
         """
         lat = (lat + 90) % 180 - 90
