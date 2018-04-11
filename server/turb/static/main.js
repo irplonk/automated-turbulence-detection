@@ -37,7 +37,7 @@ function ready(error, us, airports) {
   if (error) throw error;
 
   // Creates a legend for the color scale
-  makeColorLegend(height - 40, width - 165, 150, 25, 0.75, colorScale);
+  makeColorLegend(height - 60, width - 325, 300, 15, 0.75, colorScale);
 
   // Initialize data
   setMapData(us, airports);
@@ -59,6 +59,7 @@ function ready(error, us, airports) {
  * @param colorFun coloring function
  */
 function makeColorLegend(top, left, width, height, maxVal, colorFun) {
+  /*
   var rects = svg.selectAll(".rects")
     .data(d3.range(width))
     .enter()
@@ -68,6 +69,24 @@ function makeColorLegend(top, left, width, height, maxVal, colorFun) {
     .attr("x", (d, i) => left + i)
     .attr("width", 2)
     .attr("fill", d => colorFun(maxVal / width * d));
+  */
+
+  svg.append("g")
+  .attr("class", "legendSequential")
+  .attr("transform", "translate(" + left.toString() + "," + top.toString() + ")");
+
+  var legendSequential = d3.legendColor()
+      .shapeWidth(width / 4)
+      .shapeHeight(height)
+      .cells(4)
+      .orient("horizontal")
+      .scale(colorFun)
+      .title("Turbulence Intensity Scale")
+      .labels(["Low", "Moderate", "Severe", "Extreme"])
+      .labelFormat(d3.format(".2f"))
+
+  svg.select(".legendSequential")
+    .call(legendSequential);
 }
 
 function setMapData(us, airports) {
