@@ -194,7 +194,9 @@ function makeTurbulence(reports) {
     .attr("cx", function (x) { return x[0][0]; })
     .attr("cy", function (x) { return x[0][1]; })
     .attr("r", 8)
-    .attr("opacity", 1.0);
+    .attr("opacity", 1.0)
+    .on('mouseover', toolTip.show) // Add mouse hover tooltip listeners
+    .on('mouseout', toolTip.hide);
 }
 
 /**
@@ -208,12 +210,25 @@ function makeFlights(flights) {
              .filter(x => x !== null)
     ).enter()
     .append("circle")
+
     .attr("fill", "black")
     .attr("cx", function (x) { return x[0]; })
     .attr("cy", function (x) { return x[1]; })
     .attr("r", 1)
-    .attr("opacity", 1.0);
+    .attr("opacity", 1.0)
+    ;
 }
+
+
+var toolTip = d3.tip()
+    .attr("class", "d3-tip")
+    .offset([-12, 0])
+    .html(function(d) {
+        return "<h5>"+d+"</h5>";
+    });
+
+ svg.call(toolTip);
+
 
 function clicked(d) {
     if (active.node() === this) return reset();
