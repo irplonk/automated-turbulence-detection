@@ -120,7 +120,7 @@ function queryString(args) {
   var str = "";
   for (var arg in args) {
     if (first) {
-      first = false
+      first = false;
       str = str + "?" + arg + "=" + args[arg]
     } else {
       str = str + "&" + arg + "=" + args[arg]
@@ -152,15 +152,17 @@ function makeTurbulence(reports) {
  * Adds flight data to the map
  * @param flights the flights to be added
  */
+
 function makeFlights(flights) {
   console.log('makeFlights')
+
     g.selectAll("circle")
         .data(
           flights.map(r => projection([r.longitude, r.latitude]))
                  .filter(x => x !== null)
         ).enter()
         .append("circle")
-        .attr("fill", "black")
+        .attr("fill", /plane.jpg)
         .attr("cx", function (x) { return x[0]; })
         .attr("cy", function (x) { return x[1]; })
         .attr("r", 1)
