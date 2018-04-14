@@ -38,7 +38,8 @@ def add_flight(flight: Simulator.Flight) -> Flight:
         model = Flight(start_time=flight.start_time.replace(tzinfo=pytz.UTC),
                        origin=origin, destination=dest, latitude=flight.lat,
                        longitude=flight.lon, altitude=flight.alt,
-                       aircraft=aircraft, identifier=flight.identifier)
+                       bearing=flight.bearing, aircraft=aircraft,
+                       identifier=flight.identifier)
         model.save()
     flight.db_id = model.id
     return model
@@ -50,6 +51,7 @@ def update_flight(flight: Simulator.Flight):
         Flight.objects.filter(id=flight.db_id).update(
             latitude = flight.lat,
             longitude = flight.lon,
+            bearing = flight.bearing,
             altitude = flight.alt
         )
 
