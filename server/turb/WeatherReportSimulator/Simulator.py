@@ -7,6 +7,7 @@ import time
 import pickle
 from collections import deque
 import copy
+import math
 import numpy as np
 import matplotlib.pyplot as plt
 from . import definitions
@@ -57,7 +58,7 @@ class Flight:
 
     def __init__(self, origin: Airport, dest: Airport, start_time: datetime,
                  end_time: datetime, plane: Aircraft, lat: float, lon: float,
-                 alt: float):
+                 alt: float, bearing: float):
         """Creates a new flight.
 
         :param plane: Plane type.
@@ -68,6 +69,7 @@ class Flight:
         :param lat: Current flight Latitude
         :param lon: Current flight Longitude
         :param alt: Current flight altitude in meters
+        :param bearing: Current flight bearing in degrees
         """
         self.origin = origin
         self.dest = dest
@@ -77,6 +79,7 @@ class Flight:
         self.lat = lat
         self.lon = lon
         self.alt = alt
+        self.bearing = bearing
         self.identifier = str(Flight.uid)
         Flight.uid += 1
         self.db_id = None
@@ -107,6 +110,14 @@ class WeatherReport:
         self.tke = tke
         self.db_id = None
 
+def get_bearing(lat1, lon1, lat2, lon2):
+    """
+    Returns the great circle bearing in degrees from the first
+    coordinate to the second coordinate
+    """
+    y = math.sin(lon2 - lon1) * math.cos(lat2)
+    x = math.cos(lat2)*math.sin(lat2) - math.sin(lat1)*math.cos(lat2)*math.cos(lon2 - lon1)
+    return math.degrees(math.atan2(y, x))
 
 class FlightsGenerator:
     """Generates flights randomly starting at a given time with a given  expected frequency."""
@@ -139,11 +150,12 @@ class FlightsGenerator:
         start_lat, start_lon, start_alt = self._airport_info[origin]
         end_lat, end_lon, end_alt = self._airport_info[dest]
         flight_time = vincenty((start_lat, start_lon), (end_lat, end_lon)).meters / flight_speed
+        bearing = get_bearing(start_lat, start_lon, end_lat, end_lon)
         return Flight(Airport(origin, origin, start_lat, start_lon, start_alt),
                       Airport(dest, dest, end_lat, end_lon, end_alt),
                       self.current_time,
-                     self.current_time + timedelta(seconds=flight_time),
-                     plane_type, 0, 0, FLIGHT_HEIGHT)
+                      self.current_time + timedelta(seconds=flight_time),
+                      plane_type, 0, 0, FLIGHT_HEIGHT, bearing)
 
     @property
     def flight_time(self):
@@ -195,14 +207,16 @@ class FlightsSimulator:
 
         self._active_flights = new_active_flights
         for flight in self._active_flights:
-            flight.lat, flight.lon = self.get_location(flight)
+            flight.lat, flight.lon, flight.bearing = self.get_location(flight)
         self._current_time = stop_time
 
+
     def get_location(self, flight):
-        """Returns the latitude and longitude of an active flight.
+        """Uapdates and returns the latitude, longitude, and bearing of an active flight.
 
         :param flight: Flight to find the position of
-        :return: Tuple containing the latitude and longitude of the given flight if it is active, otherwise None
+        :return: Tuple containing the latitude, longitude and bearing of the
+                 given flight if it is active, otherwise None
         """
         if flight not in self._active_flights:
             return None
@@ -238,9 +252,14 @@ class FlightsSimulator:
             else:
                 cur_lon_shift = (-percent_complete * dif_start_minus_end + lon_start_shift) % 360
             cur_lon = cur_lon_shift - 180
+
+            cur_bearing = get_bearing(cur_lat, cur_lon, lat_end, lon_end)
+
             flight.lat = cur_lat
             flight.lon = cur_lon
-            return cur_lat, cur_lon
+            flight.bearing = cur_bearing
+
+            return cur_lat, cur_lon, cur_bearing
 
     @property
     def current_flights(self):
@@ -284,7 +303,7 @@ class WeatherReportGenerator:
         self._current_time = self.current_time + timedelta(seconds=dt)
         self._flight_sim.progress(timedelta(seconds=dt))
         flight = self._flight_sim.current_flights[randint(0, len(self._flight_sim.current_flights) - 1)]
-        cur_lat, cur_lon = self._flight_sim.get_location(flight)
+        cur_lat, cur_lon, cur_bearing = self._flight_sim.get_location(flight)
         weather = self._weather.get_weather(cur_lat, cur_lon, FLIGHT_HEIGHT, self.current_time)
         if weather is None:
             return None
