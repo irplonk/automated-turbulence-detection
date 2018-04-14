@@ -116,34 +116,33 @@ def get_bearing(lat1, lon1, lat2, lon2):
     coordinate to the second coordinate
     """
     y = math.sin(lon2 - lon1) * math.cos(lat2)
-    x = math.cos(lat2)*math.sin(lat2) - math.sin(lat1)*math.cos(lat2)*math.cos(lon2 - lon1)
+    x = math.cos(lat1)*math.sin(lat2) - math.sin(lat1)*math.cos(lat2)*math.cos(lon2 - lon1)
     return math.degrees(math.atan2(y, x))
 
-class FlightsGenerator:
+
+class FlightGenerator:
     """Generates flights randomly starting at a given time with a given  expected frequency."""
 
-    def __init__(self, start_time: datetime, average_time: timedelta):
+    def __init__(self, average_time: timedelta):
         """
         Creates a new flight generator.
 
-        :param start_time: Time that the generator will begin at.
         :param average_time: Expected time between flights in seconds.
         """
-        self._current_time = start_time
         self._average_time = average_time
         self._airports, self._origin_probabilities, self._conditional_probabilities = airport_statistics()
         self._plane_probabilities = {Aircraft('Cessna 172', 100): .2, Aircraft('Boeing 747', 100): .5,
                                      Aircraft('Airbus A380', 100): .3}
         self._airport_info = airport_info()
 
-    def next_flight(self) -> Flight:
-        """Generates and returns a new flight randomly, and progresses the current time of the generator.
+    def next_flight(self, current_time: datetime):
+        """Generates and returns a new flight randomly
 
-        :return: The next generated flight.
+        :return: The next generated flight
         """
         flight_speed = 245  # m / s
         dt = np.random.gamma(self._average_time.seconds)
-        self._current_time = self._current_time + timedelta(seconds=dt)
+        flight_start = current_time + timedelta(seconds=dt)
         origin = weighted_random(self._origin_probabilities)
         dest = weighted_random(self._conditional_probabilities[origin])
         plane_type = weighted_random(self._plane_probabilities)
@@ -153,29 +152,28 @@ class FlightsGenerator:
         bearing = get_bearing(start_lat, start_lon, end_lat, end_lon)
         return Flight(Airport(origin, origin, start_lat, start_lon, start_alt),
                       Airport(dest, dest, end_lat, end_lon, end_alt),
-                      self.current_time,
-                      self.current_time + timedelta(seconds=flight_time),
+                      flight_start,
+                      flight_start + timedelta(seconds=flight_time),
                       plane_type, 0, 0, FLIGHT_HEIGHT, bearing)
 
     @property
     def flight_time(self):
         return self._average_time
 
-    @property
-    def current_time(self):
-        return self._current_time
 
-class FlightsSimulator:
+class FlightSimulator:
     """Stores active flights created by a flight generator, and keeps track of active flights."""
 
-    def __init__(self, flight_generator: FlightsGenerator):
+    def __init__(self, current_time: datetime, flight_generator: FlightGenerator):
         """Creates a new flight simulator.
 
+        :param current_time: Starting time
         :param flight_generator: Flight generator.
-        :param stabilize_time: How far in advance of start_time the simulator should begin in seconds.
         """
-        self._current_time = copy.deepcopy(flight_generator.current_time)
+        self._current_time = current_time
         self._active_flights = []
+        self._new_flights = []
+        self._removed_flights = []
         self._flight_generator = flight_generator
         self._leftover_flight = None
         self._airport_info = airport_info()
@@ -186,33 +184,41 @@ class FlightsSimulator:
         :param d_time: How far ahead to progress the simulation in seconds.
         """
         stop_time = self.current_time + d_time
+        self._new_flights = []
+        self._removed_flights = []
 
         if self._leftover_flight is not None and self._leftover_flight.start_time <= stop_time:
-            self._active_flights.append(self._leftover_flight)
+            self._new_flights.append(self._leftover_flight)
             self._leftover_flight = None
 
-        new_active_flights = []
+        progressed_time = self._current_time
 
-        while self._flight_generator.current_time < stop_time:
-            new_flight = self._flight_generator.next_flight()
+        while progressed_time < stop_time:
+            new_flight = self._flight_generator.next_flight(progressed_time)
+            if new_flight is None:
+                break
+            progressed_time = new_flight.start_time
             if new_flight.start_time <= stop_time:
                 if new_flight.end_time > stop_time:
-                    new_active_flights.append(new_flight)
+                    self._new_flights.append(new_flight)
             else:
                 self._leftover_flight = new_flight
 
-        for flight in self._active_flights:
-            if flight.end_time > stop_time:
-                new_active_flights.append(flight)
+        all_flights = []
 
-        self._active_flights = new_active_flights
-        for flight in self._active_flights:
-            flight.lat, flight.lon, flight.bearing = self.get_location(flight)
+        for flight in self._new_flights + self._active_flights:
+            if flight.end_time > stop_time:
+                all_flights.append(flight)
+                self.get_location(flight)
+            else:
+                self._removed_flights.append(flight)
+
+        self._active_flights = all_flights
         self._current_time = stop_time
 
 
     def get_location(self, flight):
-        """Uapdates and returns the latitude, longitude, and bearing of an active flight.
+        """Updates and returns the latitude, longitude, and bearing of an active flight.
 
         :param flight: Flight to find the position of
         :return: Tuple containing the latitude, longitude and bearing of the
@@ -254,11 +260,9 @@ class FlightsSimulator:
             cur_lon = cur_lon_shift - 180
 
             cur_bearing = get_bearing(cur_lat, cur_lon, lat_end, lon_end)
-
             flight.lat = cur_lat
             flight.lon = cur_lon
             flight.bearing = cur_bearing
-
             return cur_lat, cur_lon, cur_bearing
 
     @property
@@ -281,92 +285,87 @@ class FlightsSimulator:
 class WeatherReportGenerator:
     """Simulates generation of weather reports using a given flight simulator, weather model, and report frequency."""
 
-    def __init__(self, flight_sim: FlightsSimulator, weather_model: WeatherModel, average_report_time: timedelta):
+    def __init__(self, weather_model: WeatherModel, average_report_time: timedelta):
         """Creates a new WeatherReportGenerator.
 
-        :param flight_sim: Flight simulator.
         :param weather_model: Weather model.
         :param average_report_time: Average expected time between reports in seconds.
         """
-        self._flight_sim = flight_sim
         self._average_report_time = average_report_time
-        self._current_time = copy.deepcopy(flight_sim.current_time)
         self._weather = weather_model
         self._airport_info = airport_info()
 
-    def next_report(self):
+    def next_report(self, current_time: datetime, flights):
         """Generates and returns a new weather report randomly, and progresses the current time of the generator.
 
+        :param current_time: Current time.
+        :param flights: Current active flights.
         :return: The next generated weather report.
         """
         dt = np.random.gamma(self._average_report_time.seconds)
-        self._current_time = self.current_time + timedelta(seconds=dt)
-        self._flight_sim.progress(timedelta(seconds=dt))
-        flight = self._flight_sim.current_flights[randint(0, len(self._flight_sim.current_flights) - 1)]
-        cur_lat, cur_lon, cur_bearing = self._flight_sim.get_location(flight)
-        weather = self._weather.get_weather(cur_lat, cur_lon, FLIGHT_HEIGHT, self.current_time)
+        if len(flights) == 0:
+            return None
+        flight = flights[randint(0, len(flights) - 1)]
+        cur_lat, cur_lon, cur_alt = flight.lat, flight.lon, flight.alt
+        report_time = current_time + timedelta(seconds=dt)
+        weather = self._weather.get_weather(cur_lat, cur_lon, cur_alt, report_time)
         if weather is None:
             return None
         tke, uwnd, vwnd = weather
-        return WeatherReport(self.current_time, flight, cur_lat, cur_lon,
-                             FLIGHT_HEIGHT, uwnd, vwnd, tke)
-
-    @property
-    def current_flights(self):
-        """Gets the currently active flights.
-
-        :return: List of the current active flights.
-        """
-        return self._flight_sim.current_flights
-
-    @property
-    def flight_time(self):
-        return self._flight_sim.flight_time
-
+        return WeatherReport(report_time, flight, cur_lat, cur_lon, cur_alt,
+                             uwnd, vwnd, tke)
 
     @property
     def report_time(self):
         return self._average_report_time
 
-    @property
-    def current_time(self):
-        return self._current_time
 
 class WeatherReportSimulator:
     """Simulates storage of active weather reports."""
 
-    def __init__(self, report_generator: WeatherReportGenerator, keep_time: timedelta):
+    def __init__(self, flight_simulator: FlightSimulator,
+                 report_generator: WeatherReportGenerator,
+                 keep_time: timedelta):
+        self._flight_simulator = flight_simulator
         self._report_generator = report_generator
         self._keep_time = keep_time
-        self._current_reports = deque()
+        self._current_reports = []
         self._new_reports = []
         self._removed_reports = []
-        self._current_time = copy.deepcopy(report_generator.current_time)
+        self._current_time = copy.deepcopy(flight_simulator.current_time)
         self._leftover_report = None
 
     def progress(self, d_time: timedelta):
+        self._flight_simulator.progress(d_time)
         stop_time = self._current_time + d_time
         self._new_reports = []
         self._removed_reports = []
 
         if self._leftover_report is not None and self._leftover_report.time <= stop_time:
-            self._current_reports.append(self._leftover_report)
             self._new_reports.append(self._leftover_report)
             self._leftover_report = None
 
-        while self._report_generator.current_time < stop_time:
-            new_report = self._report_generator.next_report()
+        progressed_time = self._current_time
+        while progressed_time < stop_time:
+            new_report = self._report_generator.next_report(progressed_time,
+                self._flight_simulator.current_flights)
+            if new_report is None:
+                break
+            progressed_time = new_report.time
             if new_report is not None:
                 if new_report.time <= stop_time:
-                    self._current_reports.append(new_report)
                     self._new_reports.append(new_report)
                 else:
                     self._leftover_report = new_report
 
-        while len(self._current_reports) > 0 and self._current_reports[0].time < stop_time - self._keep_time:
-            removed = self._current_reports.popleft()
-            self._removed_reports.append(removed)
+        all_reports = []
+        for r in self._new_reports + self._current_reports:
+            if r.time < stop_time - self._keep_time:
+                self._removed_reports.append(r)
+            else:
+                all_reports.append(r)
 
+        self._current_reports = all_reports
         self._current_time = stop_time
 
     @property
@@ -391,7 +390,16 @@ class WeatherReportSimulator:
 
         :return: List of the current active flights
         """
-        return self._report_generator.current_flights
+        return self._flight_simulator.current_flights
+
+
+    @property
+    def removed_flights(self):
+        """Gets the flights which have completed in the last iteration.
+
+        :return: List of the current completed flights.
+        """
+        return self._flight_simulator._removed_flights
 
     @property
     def new_reports(self):
@@ -413,7 +421,7 @@ class WeatherReportSimulator:
     def get_simulator(cls, flight_time: float=20, report_time: float=10, parallel: bool=False):
         data = Dataset(definitions.WEATHER_DATA_DIR, 'r', parallel=parallel)
         start_time = datetime(year=1800, month=1, day=1, hour=0, minute=0, second=0) \
-                     + timedelta(hours=data['time'][0]) - timedelta(hours=3)
+                     + timedelta(hours=data['time'][0])
         try:
             reg1, reg2 = pickle.load(open(definitions.INDEX_REGRESSION_DIR, 'rb'))
             index_predictor = IndexPredictor(data['lat'], data['lon'], reg1, reg2)
@@ -421,11 +429,13 @@ class WeatherReportSimulator:
             index_predictor = IndexPredictor(data['lat'], data['lon'])
             pickle.dump(index_predictor.get_predictors(), open(definitions.INDEX_REGRESSION_DIR, 'wb'))
         weather_model = WeatherModel(data, data, data, data, index_predictor)
-        flight_generator = FlightsGenerator(start_time, timedelta(seconds=flight_time))
-        flight_simulator = FlightsSimulator(flight_generator)
-        flight_simulator.progress(timedelta(hours=3))
-        report_generator = WeatherReportGenerator(flight_simulator, weather_model, timedelta(seconds=report_time))
-        return WeatherReportSimulator(report_generator, timedelta(hours=1))
+        flight_generator = FlightGenerator(timedelta(seconds=flight_time))
+        flight_simulator = FlightSimulator(start_time, flight_generator)
+        # flight_simulator.progress(timedelta(hours=3))
+        report_generator = WeatherReportGenerator(weather_model, timedelta(seconds=report_time))
+        simulator = WeatherReportSimulator(flight_simulator, report_generator, timedelta(hours=1))
+        # simulator.progress(timedelta(hours=1))
+        return simulator
 
 
 def weighted_random(distribution: dict):

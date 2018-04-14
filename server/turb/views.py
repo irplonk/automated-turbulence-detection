@@ -89,7 +89,7 @@ def display(request: HttpRequest) -> HttpResponse:
         db_attrs = ['airport_code', 'latitude', 'longitude', 'altitude']
     elif table_name == 'flights':
         entries = Flight.objects.all()
-        db_attrs = ['identifier', 'start_time', 'latitude', 'longitude', 'bearing', 'altitude']
+        db_attrs = ['identifier', 'active', 'start_time', 'latitude', 'longitude', 'bearing', 'altitude']
     elif table_name == 'reports':
         entries = WeatherReport.objects.all()
         db_attrs = ['time', 'latitude', 'longitude', 'altitude',
@@ -121,7 +121,7 @@ def query(request: HttpRequest) -> HttpResponse:
     elif table_name == 'reports':
         entries = WeatherReport.objects.all()
     elif table_name == 'flights':
-        entries = Flight.objects.all()
+        entries = Flight.objects.filter(active=True).all()
     else:
         return JsonResponse({"entries": []})
 

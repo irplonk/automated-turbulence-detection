@@ -111,7 +111,9 @@ class SimulationThread(threading.Thread):
             start = time.time()
             self._sim.progress(timedelta(seconds=self._time_per_update))
             for flight in self._sim.current_flights:
-                update_flight(flight)
+                update_flight(flight, True)
+            for flight in self._sim.removed_flights:
+                update_flight(flight, False)
             for report in self._sim.new_reports:
                 add_report(report)
             n = 0
@@ -125,6 +127,7 @@ class SimulationThread(threading.Thread):
                 time.sleep(self._update_time - dif)
             else:
                 print('simulation progressing ' + str(dif - self._update_time) + 's too slow')
+
 
     def stop(self):
         """Stops this thread. Cannot be started again once stopped."""
