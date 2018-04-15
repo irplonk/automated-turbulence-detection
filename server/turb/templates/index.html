@@ -42,6 +42,24 @@
         stroke-linecap: round;
         stroke-linejoin: round;
     }
+    h1 {
+        text-align: center;
+    }
+    h2{
+        text-align: center;
+    }
+    script {
+        left:10px;
+        width:150%;
+    }
+
+    instructions {
+        position: absolute;
+        right: 20px;
+        width: 25%;
+        border: 2px solid black;
+        padding: 5px;
+    }
 
     .d3-tip {
         line-height: 1;
@@ -73,6 +91,7 @@
     }
 
 </style>
+<h1>US Turbulence</h1>
 <body>
     <div class="grabbable"></div>
 </body>
@@ -87,3 +106,12 @@ d3.queue()
     .defer(d3.json, "{% static "airports.json" %}")
     .await(ready);
 </script>
+<instructions>
+    <h2>Instructions</h2>
+    <h3>Click and Drag</h3>
+    <p>Click and drag on the map to view more of the US, like Hawaii and Alaska. </p>
+    <h3>Toggle Tooltip</h3>
+    <p>To view information when hovering over turbulence, turn the tool tip on.
+    To not view detailed information, turn the tooltip off.</p>
+</instructions>
+</body>

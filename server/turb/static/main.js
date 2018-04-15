@@ -166,11 +166,12 @@ function queryString(args) {
   var first = true;
   var str = "";
   for (var arg in args) {
-  if (first) {
-    first = false;
-    str = str + "?" + arg + "=" + args[arg];
-  } else {
-    str = str + "&" + arg + "=" + args[arg];
+    if (first) {
+      first = false;
+      str = str + "?" + arg + "=" + args[arg]
+    } else {
+      str = str + "&" + arg + "=" + args[arg]
+    }
   }
   }
   return str;
@@ -210,6 +211,7 @@ function makeTurbulence(reports) {
  * Adds flight data to the map
  * @param flights the aircraft flights to be displayed on the map
  */
+
 function makeFlights(flights) {
   g.selectAll("#flight").remove();
 
