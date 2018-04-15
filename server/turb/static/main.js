@@ -24,7 +24,6 @@ var zoom = d3.zoom()
   .scaleExtent([1, 8])
   .on("zoom", zoomed);
 
-
 svg.call(zoom);
 
 svg.append("rect")
@@ -33,8 +32,9 @@ svg.append("rect")
   .attr("height", height)
   .on("click", reset);
 
-var g = svg.append("g");
-
+var layer1 = svg.append('g');
+var layer2 = svg.append('g');
+var layer3 = svg.append('g');
 
 function ready(error, us, airports) {
   if (error) throw error;
@@ -96,13 +96,13 @@ function makeColorLegend(top, left, width, height, maxVal, colorFun) {
 }
 
 function setMapData(us, airports) {
-  g.selectAll("path")
+  layer1.selectAll("path")
     .data(us.features)
     .enter().append("path")
     .attr("d", path)
     .attr("class", "feature");
 
-  g.append("path")
+  layer1.append("path")
     .datum(topojson.mesh(us, us.features, function(a, b) { return a !== b; }))
     .attr("class", "mesh")
     .attr("d", path);
@@ -189,8 +189,8 @@ var colorScale = d3.scaleLinear()
  * @param reports the weather reports to be displayed on the map
  */
 function makeTurbulence(reports) {
-  g.selectAll("#report").remove();
-  g.selectAll("circle")
+  layer2.selectAll("#report").remove();
+  layer2.selectAll("circle")
     .data(
       reports.map(r => [projection([r.longitude, r.latitude]), r.tke, r.time])
              .filter(a => a[0] !== null)
@@ -212,7 +212,7 @@ function makeTurbulence(reports) {
  */
 
 function makeFlights(flights) {
-  g.selectAll("#flight").remove();
+  layer3.selectAll("#flight").remove();
 
   /*
   g.selectAll("circle")
@@ -230,7 +230,7 @@ function makeFlights(flights) {
     */
 
   var lineLen = 5;
-  g.selectAll("line")
+  layer3.selectAll("line")
     .data(
       flights.map(r => [projection([r.longitude, r.latitude]), r.bearing])
              .filter(x => x[0] !== null)
@@ -294,9 +294,12 @@ function reset() {
 }
 
 function zoomed() {
-    g.style("stroke-width", 1.5 / d3.event.transform.k + "px");
-    // g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")"); // not in d3 v4
-    g.attr("transform", d3.event.transform); // updated for d3 v4
+    layer1.style("stroke-width", 1.5 / d3.event.transform.k + "px");
+    layer1.attr("transform", d3.event.transform);
+    layer2.style("stroke-width", 1.5 / d3.event.transform.k + "px");
+    layer2.attr("transform", d3.event.transform);
+    layer3.style("stroke-width", 1.5 / d3.event.transform.k + "px");
+    layer3.attr("transform", d3.event.transform);
 }
 
 
