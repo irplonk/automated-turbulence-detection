@@ -162,7 +162,7 @@ function makeFlights(flights) {
                  .filter(x => x !== null)
         ).enter()
         .append("circle")
-        .attr("fill", /plane.jpg)
+        .attr("fill", "black")
         .attr("cx", function (x) { return x[0]; })
         .attr("cy", function (x) { return x[1]; })
         .attr("r", 1)
