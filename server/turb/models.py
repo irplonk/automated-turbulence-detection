@@ -24,7 +24,9 @@ class Flight(models.Model):
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
     altitude = models.DecimalField(max_digits=9, decimal_places=1)
+    bearing = models.DecimalField(max_digits=9, decimal_places=6)
     aircraft = models.ForeignKey(Aircraft, on_delete=models.CASCADE)
+    active = models.BooleanField()
     identifier = models.TextField()
 
 class WeatherReport(models.Model):
