@@ -1,6 +1,6 @@
-var width = 1000,
-  height = 700,
-  active = d3.select(null);
+var width = 1000;
+var height = 700;
+var active = d3.select(null);
 
 var projection = d3.geoMercator()
   .scale(2 * (width - 3) / (Math.PI))
@@ -78,18 +78,18 @@ function makeColorLegend(top, left, width, height, maxVal, colorFun) {
   */
 
   svg.append("g")
-  .attr("class", "legendSequential")
-  .attr("transform", "translate(" + left.toString() + "," + top.toString() + ")");
+    .attr("class", "legendSequential")
+    .attr("transform", "translate(" + left.toString() + "," + top.toString() + ")");
 
   var legendSequential = d3.legendColor()
-      .shapeWidth(width / 4)
-      .shapeHeight(height)
-      .cells(4)
-      .orient("horizontal")
-      .scale(colorFun)
-      .title("Turbulence Intensity Scale")
-      .labels(["Low", "Moderate", "Severe", "Extreme"])
-      .labelFormat(d3.format(".2f"))
+    .shapeWidth(width / 4)
+    .shapeHeight(height)
+    .cells(4)
+    .orient("horizontal")
+    .scale(colorFun)
+    .title("Turbulence Intensity Scale")
+    .labels(["Low", "Moderate", "Severe", "Extreme"])
+    .labelFormat(d3.format(".2f"))
 
   svg.select(".legendSequential")
     .call(legendSequential);
@@ -121,12 +121,12 @@ function setMapData(us, airports) {
  * @param aircraft whether or not to add aircraft
  */
 function updateLiveData(reports, aircraft) {
-  if (reports) {
-    makeQuery(-1, 1, 'reports', makeTurbulence);
-  }
-  if (aircraft) {
-    makeQuery(-1, 1, 'flights', makeFlights);
-  }
+    if (reports) {
+      makeQuery(-1, 1, 'reports', makeTurbulence);
+    }
+    if (aircraft) {
+      makeQuery(-1, 1, 'flights', makeFlights);
+    }
 }
 
 /**
@@ -137,24 +137,24 @@ function updateLiveData(reports, aircraft) {
  * @param callback the function to call with the response results
  */
 function makeQuery(max, start, table, callback) {
-  var xhttp = new XMLHttpRequest();
-  var url = "http://127.0.0.1:8000/query";
-  var params;
-  if (max > 0) {
-    params = queryString({"max": max, "start": start, "table": table});
-  } else {
-    params = queryString({"start": start, "table": table});
-  }
-  url = url + params;
-  xhttp.onreadystatechange = processRequest;
-  function processRequest() {
-    if (xhttp.readyState === 4 && xhttp.status === 200) {
-      var response = JSON.parse(xhttp.response);
-      callback(response.entries);
+    var xhttp = new XMLHttpRequest();
+    var url = "http://127.0.0.1:8000/query";
+    var params;
+    if (max > 0) {
+      params = queryString({"max": max, "start": start, "table": table});
+    } else {
+      params = queryString({"start": start, "table": table});
     }
-  }
-  xhttp.open("GET", url, true);
-  xhttp.send();
+    url = url + params;
+    xhttp.onreadystatechange = processRequest;
+    function processRequest() {
+      if (xhttp.readyState === 4 && xhttp.status === 200) {
+        var response = JSON.parse(xhttp.response);
+        callback(response.entries);
+      }
+    }
+    xhttp.open("GET", url, true);
+    xhttp.send();
 }
 
 /**
@@ -166,12 +166,12 @@ function queryString(args) {
   var first = true;
   var str = "";
   for (var arg in args) {
-    if (first) {
-      first = false;
-      str = str + "?" + arg + "=" + args[arg];
-    } else {
-      str = str + "&" + arg + "=" + args[arg];
-    }
+  if (first) {
+    first = false;
+    str = str + "?" + arg + "=" + args[arg];
+  } else {
+    str = str + "&" + arg + "=" + args[arg];
+  }
   }
   return str;
 }
@@ -192,7 +192,7 @@ function makeTurbulence(reports) {
   g.selectAll("#report").remove();
   g.selectAll("circle")
     .data(
-      reports.map(r => [projection([r.longitude, r.latitude]), r.tke])
+      reports.map(r => [projection([r.longitude, r.latitude]), r.tke, r.time])
              .filter(a => a[0] !== null)
     ).enter()
     .append("circle")
@@ -252,7 +252,12 @@ var reportTooltip = d3.tip()
   .offset([-12, 0])
   .html(function(d) {
     inv = projection.invert(d[0]);
-    return "<h5 style='color:white'>(" + inv[1].toFixed(4) + ", " + inv[0].toFixed(4) + ")<h5>";
+    time = new Date(d[2]);
+    var timeOptions = {
+      month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
+    };
+    return "<h5 style='color:white'>(" + inv[1].toFixed(4) + ", " + inv[0].toFixed(4) + ")<h5>"
+      + "<h5 style='color:white'>" + time.toLocaleTimeString("en-US", timeOptions) + "<h5>";
   })
   .style("fill", "white");
 
