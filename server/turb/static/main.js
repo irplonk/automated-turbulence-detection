@@ -2,7 +2,7 @@ var width = 1000,
   height = 700,
   active = d3.select(null);
 
-var projection = d3.geoMercator() // updated for d3 v4
+var projection = d3.geoMercator()
   .scale(2 * (width - 3) / (Math.PI))
   .translate([1.5 * width, 1.125 * height]);
 
@@ -199,8 +199,8 @@ function makeTurbulence(reports) {
     .attr("cy", function (x) { return x[0][1]; })
     .attr("r", 8)
     .attr("opacity", 1.0)
-    .on('mouseover', toolTip.show) // Add mouse hover tooltip listeners
-    .on('mouseout', toolTip.hide);
+    .on("mouseover", reportTooltip.show) // Add mouse hover tooltip listeners
+    .on("mouseout", reportTooltip.hide);
 }
 
 /**
@@ -244,14 +244,16 @@ function makeFlights(flights) {
       return "translate(" + x[0][0] + "," + x[0][1] + ") rotate(" + x[1] + ")"; });
 }
 
-var toolTip = d3.tip()
-    .attr("class", "d3-tip")
-    .offset([-12, 0])
-    .html(function(d) {
-        return "<h5>"+"Longitude: "+d[0] +"</h5>" + "<h5>" + "Latitude: " + d[1] +"<H5>";
-    });
+var reportTooltip = d3.tip()
+  .attr("class", "d3-tip")
+  .offset([-12, 0])
+  .html(function(d) {
+    inv = projection.invert(d[0]);
+    return "<h5 style='color:white'>(" + inv[1].toFixed(4) + ", " + inv[0].toFixed(4) + ")<h5>";
+  })
+  .style("fill", "white");
 
- svg.call(toolTip);
+svg.call(reportTooltip);
 
 
 function clicked(d) {
