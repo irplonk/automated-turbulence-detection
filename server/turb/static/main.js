@@ -173,7 +173,6 @@ function queryString(args) {
       str = str + "&" + arg + "=" + args[arg]
     }
   }
-  }
   return str;
 }
 
