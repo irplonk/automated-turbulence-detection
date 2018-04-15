@@ -9,32 +9,20 @@ var projection = d3.geoMercator()
 var path = d3.geoPath() // updated for d3 v4
   .projection(projection);
 
-var svg = d3.select("body")
+/*
+var container = d3.select("body")
+  .append("div")
+  .attr("class", "grabbable");
+*/
+
+var svg = d3.select("div")
   .append("svg")
-  .attr("width", width)
-  .attr("height", height)
-  .attr("cursor", "-webkit-grab");
+  .attr("width", "100%")
+  .attr("height", "100%");
 
 var zoom = d3.zoom()
   .scaleExtent([1, 8])
-  .on("zoom", zoomed)
-  /*
-  .on("start", function(d) {
-    if (d3.event.sourceEvent !== null
-        && d3.event.sourceEvent instanceof MouseEvent
-        && !(d3.event.sourceEvent instanceof WheelEvent)) {
-      console.log("start");
-      svg.attr("cursor", "-webkit-grabbing");
-    }
-  })
-  .on("end", function(d) {
-    if (d3.event.sourceEvent !== null
-        && d3.event.sourceEvent instanceof MouseEvent
-        && !(d3.event.sourceEvent instanceof WheelEvent)) {
-      console.log("end");
-      svg.attr("cursor", "-webkit-grab");
-    }
-  })*/;
+  .on("zoom", zoomed);
 
 
 svg.call(zoom);
