@@ -6,20 +6,38 @@ var projection = d3.geoMercator()
   .scale(2 * (width - 3) / (Math.PI))
   .translate([1.5 * width, 1.125 * height]);
 
-var zoom = d3.zoom()
-// no longer in d3 v4 - zoom initialises with zoomIdentity, so it's already at origin
-// .translate([0, 0])
-// .scale(1)
-  .scaleExtent([1, 8])
-  .on("zoom", zoomed);
-
 var path = d3.geoPath() // updated for d3 v4
   .projection(projection);
 
-var svg = d3.select("body").append("svg")
+var svg = d3.select("body")
+  .append("svg")
   .attr("width", width)
   .attr("height", height)
-  .on("click", stopped, true);
+  .attr("cursor", "-webkit-grab");
+
+var zoom = d3.zoom()
+  .scaleExtent([1, 8])
+  .on("zoom", zoomed)
+  /*
+  .on("start", function(d) {
+    if (d3.event.sourceEvent !== null
+        && d3.event.sourceEvent instanceof MouseEvent
+        && !(d3.event.sourceEvent instanceof WheelEvent)) {
+      console.log("start");
+      svg.attr("cursor", "-webkit-grabbing");
+    }
+  })
+  .on("end", function(d) {
+    if (d3.event.sourceEvent !== null
+        && d3.event.sourceEvent instanceof MouseEvent
+        && !(d3.event.sourceEvent instanceof WheelEvent)) {
+      console.log("end");
+      svg.attr("cursor", "-webkit-grab");
+    }
+  })*/;
+
+
+svg.call(zoom);
 
 svg.append("rect")
   .attr("class", "background")
@@ -28,9 +46,6 @@ svg.append("rect")
   .on("click", reset);
 
 var g = svg.append("g");
-
-svg.call(zoom); // delete this line to disable free zooming
-// .call(zoom.event); // not in d3 v4
 
 
 function ready(error, us, airports) {
@@ -255,7 +270,6 @@ var reportTooltip = d3.tip()
 
 svg.call(reportTooltip);
 
-
 function clicked(d) {
     if (active.node() === this) return reset();
     active.classed("active", false);
@@ -290,6 +304,7 @@ function zoomed() {
     // g.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")"); // not in d3 v4
     g.attr("transform", d3.event.transform); // updated for d3 v4
 }
+
 
 // If the drag behavior prevents the default clicks from passing through,
 // also stop propagation so click-to-zoom is not triggered.
