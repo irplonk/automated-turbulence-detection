@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from random import randint, uniform
 from netCDF4 import Dataset
-from geopy.distance import vincenty
 import time
 import pickle
 from collections import deque
@@ -111,7 +110,7 @@ class WeatherReport:
 
 def get_angular_distance(lat1, lon1, lat2, lon2):
     """
-    Returns the angular great circle distance in meters from the first
+    Returns the angular great circle distance from the first
     coordinate to the second coordinate
     """
     lat1 = math.radians(lat1)
@@ -193,8 +192,8 @@ class FlightGenerator:
         plane_type = weighted_random(self._plane_probabilities)
         start_lat, start_lon, start_alt = self._airport_info[origin]
         end_lat, end_lon, end_alt = self._airport_info[dest]
-
         flight_time = get_distance(start_lat, start_lon, end_lat, end_lon, FLIGHT_HEIGHT) / flight_speed
+        bearing = get_bearing(start_lat, start_lon, end_lat, end_lon)
         return Flight(Airport(origin, origin, start_lat, start_lon, start_alt),
                       Airport(dest, dest, end_lat, end_lon, end_alt),
                       flight_start,

@@ -39,7 +39,7 @@ function ready(error, us, airports) {
   // Creates a legend for the color scale
   makeColorLegend(height - 60, width - 325, 300, 15, 0.75, colorScale);
 
-  var doReports = false;
+  var doReports = true;
   var doFlights = true;
 
   // Initialize data
@@ -49,7 +49,7 @@ function ready(error, us, airports) {
   // Update data every 10 seconds
   setInterval(function(){
     updateLiveData(doReports, doFlights);
-  }, 1000);
+  }, 3000);
 }
 
 /**
@@ -118,7 +118,6 @@ function setMapData(us, airports) {
  * @param aircraft whether or not to add aircraft
  */
 function updateLiveData(reports, aircraft) {
-  svg.selectAll("circle").remove();
   if (reports) {
     makeQuery(-1, 1, 'reports', makeTurbulence);
   }
@@ -187,12 +186,14 @@ var colorScale = d3.scaleLinear()
  * @param reports the weather reports to be displayed on the map
  */
 function makeTurbulence(reports) {
+  g.selectAll("#report").remove();
   g.selectAll("circle")
     .data(
       reports.map(r => [projection([r.longitude, r.latitude]), r.tke])
              .filter(a => a[0] !== null)
     ).enter()
     .append("circle")
+    .attr("id", "report")
     .attr("fill", function (x) { return colorScale(x[1]); })
     .attr("cx", function (x) { return x[0][0]; })
     .attr("cy", function (x) { return x[0][1]; })
@@ -207,21 +208,41 @@ function makeTurbulence(reports) {
  * @param flights the aircraft flights to be displayed on the map
  */
 function makeFlights(flights) {
+  g.selectAll("#flight").remove();
+
+  /*
   g.selectAll("circle")
     .data(
       flights.map(r => projection([r.longitude, r.latitude]))
              .filter(x => x !== null)
     ).enter()
     .append("circle")
-
+    .attr("id", "flight")
     .attr("fill", "black")
     .attr("cx", function (x) { return x[0]; })
     .attr("cy", function (x) { return x[1]; })
     .attr("r", 1)
-    .attr("opacity", 1.0)
-    ;
-}
+    .attr("opacity", 1.0);
+    */
 
+  var lineLen = 5;
+  g.selectAll("line")
+    .data(
+      flights.map(r => [projection([r.longitude, r.latitude]), r.bearing])
+             .filter(x => x[0] !== null)
+    ).enter()
+    .append("line")
+    .attr("id", "flight")
+    .attr("fill", "black")
+    .attr("x1", "0")
+    .attr("y1", "0")
+    .attr("x2", "0")
+    .attr("y2", String(lineLen))
+    .attr("stroke", "black")
+    .attr("stroke-width", 1)
+    .attr("transform", function (x) {
+      return "translate(" + x[0][0] + "," + x[0][1] + ") rotate(" + x[1] + ")"; });
+}
 
 var toolTip = d3.tip()
     .attr("class", "d3-tip")
