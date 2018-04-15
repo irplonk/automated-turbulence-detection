@@ -39,14 +39,17 @@ function ready(error, us, airports) {
   // Creates a legend for the color scale
   makeColorLegend(height - 60, width - 325, 300, 15, 0.75, colorScale);
 
+  var doReports = false;
+  var doFlights = true;
+
   // Initialize data
   setMapData(us, airports);
-  updateLiveData(true, true);
+  updateLiveData(doReports, doFlights);
 
   // Update data every 10 seconds
   setInterval(function(){
-    updateLiveData(true, true);
-  }, 10000);
+    updateLiveData(doReports, doFlights);
+  }, 1000);
 }
 
 /**

@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from random import randint, uniform
 from netCDF4 import Dataset
 from geopy.distance import vincenty
-from geopy.distance import vincenty
 import time
 import pickle
 from collections import deque
@@ -110,11 +109,57 @@ class WeatherReport:
         self.tke = tke
         self.db_id = None
 
+def get_angular_distance(lat1, lon1, lat2, lon2):
+    """
+    Returns the angular great circle distance in meters from the first
+    coordinate to the second coordinate
+    """
+    lat1 = math.radians(lat1)
+    lon1 = math.radians(lon1)
+    lat2 = math.radians(lat2)
+    lon2 = math.radians(lon2)
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+    a = math.sin(dlat / 2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dlon / 2)**2
+    c = 2*math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return c
+
+def get_distance(lat1, lon1, lat2, lon2, alt):
+    """
+    Returns the great circle distance in meters from the first
+    coordinate to the second coordinate at the given altitude
+    """
+    r = 6371000 + alt # radius from center of Earth in meters
+    return r * get_angular_distance(lat1, lon1, lat2, lon2)
+
+def get_inter_point(lat1, lon1, lat2, lon2, x):
+    """
+    Returns the intermediate point between the two given points
+    on the great circle that is x proportion from the first to the second
+    """
+    d = get_angular_distance(lat1, lon1, lat2, lon2)
+    lat1 = math.radians(lat1)
+    lon1 = math.radians(lon1)
+    lat2 = math.radians(lat2)
+    lon2 = math.radians(lon2)
+    a = math.sin((1 - x)*d) / math.sin(d)
+    b = math.sin(x * d) / math.sin(d)
+    x = a*math.cos(lat1)*math.cos(lon1) + b*math.cos(lat2)*math.cos(lon2)
+    y = a*math.cos(lat1)*math.sin(lon1) + b*math.cos(lat2)*math.sin(lon2)
+    z = a*math.sin(lat1) + b*math.sin(lat2)
+    lati = math.atan2(z, math.sqrt(x**2 + y**2))
+    loni = math.atan2(y, x)
+    return math.degrees(lati), math.degrees(loni)
+
 def get_bearing(lat1, lon1, lat2, lon2):
     """
     Returns the great circle bearing in degrees from the first
     coordinate to the second coordinate
     """
+    lat1 = math.radians(lat1)
+    lon1 = math.radians(lon1)
+    lat2 = math.radians(lat2)
+    lon2 = math.radians(lon2)
     y = math.sin(lon2 - lon1) * math.cos(lat2)
     x = math.cos(lat1)*math.sin(lat2) - math.sin(lat1)*math.cos(lat2)*math.cos(lon2 - lon1)
     return math.degrees(math.atan2(y, x))
@@ -148,8 +193,8 @@ class FlightGenerator:
         plane_type = weighted_random(self._plane_probabilities)
         start_lat, start_lon, start_alt = self._airport_info[origin]
         end_lat, end_lon, end_alt = self._airport_info[dest]
-        flight_time = vincenty((start_lat, start_lon), (end_lat, end_lon)).meters / flight_speed
-        bearing = get_bearing(start_lat, start_lon, end_lat, end_lon)
+
+        flight_time = get_distance(start_lat, start_lon, end_lat, end_lon, FLIGHT_HEIGHT) / flight_speed
         return Flight(Airport(origin, origin, start_lat, start_lon, start_alt),
                       Airport(dest, dest, end_lat, end_lon, end_alt),
                       flight_start,
@@ -237,32 +282,13 @@ class FlightSimulator:
 
             percent_complete = (self.current_time - flight.start_time) / (flight.end_time - flight.start_time)
 
-            lat_start_shift = lat_start + 90
-            lat_end_shift = lat_end + 90
-            cur_lat_shift = 0
-            dif_end_minus_start = (lat_end_shift - lat_start_shift) % 180
-            dif_start_minus_end = (lat_start_shift - lat_end_shift) % 180
-            if dif_end_minus_start < dif_start_minus_end :
-                cur_lat_shift = (percent_complete * dif_end_minus_start + lat_start_shift) % 180
-            else:
-                cur_lat_shift = (-percent_complete * dif_start_minus_end + lat_start_shift) % 180
-            cur_lat = cur_lat_shift - 90
-
-            lon_start_shift = lon_start + 180
-            lon_end_shift = lon_end + 180
-            cur_lon_shift = 0
-            dif_end_minus_start = (lon_end_shift - lon_start_shift) % 360
-            dif_start_minus_end = (lon_start_shift - lon_end_shift) % 360
-            if dif_end_minus_start < dif_start_minus_end :
-                cur_lon_shift = (percent_complete * dif_end_minus_start + lon_start_shift) % 360
-            else:
-                cur_lon_shift = (-percent_complete * dif_start_minus_end + lon_start_shift) % 360
-            cur_lon = cur_lon_shift - 180
-
+            cur_lat, cur_lon = get_inter_point(lat_start, lon_start, lat_end, lon_end, percent_complete)
             cur_bearing = get_bearing(cur_lat, cur_lon, lat_end, lon_end)
+
             flight.lat = cur_lat
             flight.lon = cur_lon
             flight.bearing = cur_bearing
+
             return cur_lat, cur_lon, cur_bearing
 
     @property
