@@ -7,8 +7,6 @@
     }
 
     .grabbable {
-        width: 1000px;
-        height: 700px;
         cursor: move;
         cursor: grab;
         cursor: -moz-grab;
@@ -16,8 +14,6 @@
     }
 
     .grabbable:active {
-        width: 1000px;
-        height: 700px;
         cursor: grabbing;
         cursor: -moz-grabbing;
         cursor: -webkit-grabbing;
@@ -93,7 +89,18 @@
 </style>
 <h1>US Turbulence</h1>
 <body>
-    <div class="grabbable"></div>
+    <div class="grabbable" width="1000px" height="700px">
+      <svg width="1000px" height="700px">
+      </svg>
+    </div>
+    <instructions>
+        <h2>Instructions</h2>
+        <h3>Click and Drag</h3>
+        <p>Click and drag on the map to view more of the US, like Hawaii and Alaska. </p>
+        <h3>Toggle Tooltip</h3>
+        <p>To view information when hovering over turbulence, turn the tool tip on.
+        To not view detailed information, turn the tooltip off.</p>
+    </instructions>
 </body>
 <script src="https://d3js.org/d3.v4.min.js"></script> <!-- Inclusion of d3 v4 -->
 <script src="https://d3js.org/topojson.v1.min.js"></script>
@@ -107,12 +114,4 @@ d3.queue()
     .defer(d3.json, "{% static "plane_svg.json" %}")
     .await(ready);
 </script>
-<instructions>
-    <h2>Instructions</h2>
-    <h3>Click and Drag</h3>
-    <p>Click and drag on the map to view more of the US, like Hawaii and Alaska. </p>
-    <h3>Toggle Tooltip</h3>
-    <p>To view information when hovering over turbulence, turn the tool tip on.
-    To not view detailed information, turn the tooltip off.</p>
-</instructions>
 </body>

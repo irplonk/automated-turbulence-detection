@@ -15,10 +15,7 @@ var container = d3.select("body")
   .attr("class", "grabbable");
 */
 
-var svg = d3.select("div")
-  .append("svg")
-  .attr("width", "100%")
-  .attr("height", "100%");
+var svg = d3.select("svg");
 
 var zoom = d3.zoom()
   .scaleExtent([1, 8])
