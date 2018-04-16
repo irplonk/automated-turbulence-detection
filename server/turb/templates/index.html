@@ -104,6 +104,7 @@
 d3.queue()
     .defer(d3.json, "{% static "us.json" %}")
     .defer(d3.json, "{% static "airports.json" %}")
+    .defer(d3.json, "{% static "plane_svg.json" %}")
     .await(ready);
 </script>
 <instructions>

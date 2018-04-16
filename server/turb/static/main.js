@@ -36,8 +36,12 @@ var layer1 = svg.append('g');
 var layer2 = svg.append('g');
 var layer3 = svg.append('g');
 
-function ready(error, us, airports) {
+var planeString = "";
+
+function ready(error, us, airports, plane) {
   if (error) throw error;
+
+  planeString = plane.path;
 
   // Creates a legend for the color scale
   makeColorLegend(height - 60, width - 325, 300, 15, 0.75, colorScale);
@@ -52,7 +56,7 @@ function ready(error, us, airports) {
   // Update data every 10 seconds
   setInterval(function(){
     updateLiveData(doReports, doFlights);
-  }, 3000);
+  }, 5000);
 }
 
 /**
@@ -214,38 +218,17 @@ function makeTurbulence(reports) {
 function makeFlights(flights) {
   layer3.selectAll("#flight").remove();
 
-  /*
-  g.selectAll("circle")
-    .data(
-      flights.map(r => projection([r.longitude, r.latitude]))
-             .filter(x => x !== null)
-    ).enter()
-    .append("circle")
-    .attr("id", "flight")
-    .attr("fill", "black")
-    .attr("cx", function (x) { return x[0]; })
-    .attr("cy", function (x) { return x[1]; })
-    .attr("r", 1)
-    .attr("opacity", 1.0);
-    */
-
-  var lineLen = 5;
-  layer3.selectAll("line")
+  layer3.selectAll("path")
     .data(
       flights.map(r => [projection([r.longitude, r.latitude]), r.bearing])
              .filter(x => x[0] !== null)
     ).enter()
-    .append("line")
+    .append("path")
     .attr("id", "flight")
+    .attr("d", planeString)
     .attr("fill", "black")
-    .attr("x1", "0")
-    .attr("y1", "0")
-    .attr("x2", "0")
-    .attr("y2", String(lineLen))
-    .attr("stroke", "black")
-    .attr("stroke-width", 1)
     .attr("transform", function (x) {
-      return "translate(" + x[0][0] + "," + x[0][1] + ") rotate(" + x[1] + ")"; });
+      return "translate(" + x[0][0] + "," + x[0][1] + ") rotate(" + x[1] + ") scale(0.25)"; });
 }
 
 var reportTooltip = d3.tip()
