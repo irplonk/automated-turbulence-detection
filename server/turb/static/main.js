@@ -292,8 +292,7 @@ function stopped() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  var checkbox = document.querySelector('input[type="checkbox"]');
-
+  var checkbox = document.getElementById("tubulence-info-toggle");
   checkbox.addEventListener('change', function () {
     if (checkbox.checked) {
       showReportTooltips = true;
