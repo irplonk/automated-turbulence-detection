@@ -112,23 +112,29 @@ def display(request: HttpRequest) -> HttpResponse:
 def query(request: HttpRequest) -> HttpResponse:
     max_entries = safe_cast(request.GET.get('max', -1), int, -1)
     start_index = safe_cast(request.GET.get('start', 0), int, 0)
+    id = safe_cast(request.GET.get('id', -1), int, -1)
     table_name = request.GET.get('table', '')
-
+    
     if table_name == 'airplanes':
-        entries = Aircraft.objects.all()
+        entries = Aircraft.objects
     elif table_name == 'airports':
-        entries = Airport.objects.all()
+        entries = Airport.objects
     elif table_name == 'reports':
-        entries = WeatherReport.objects.all()
+        entries = WeatherReport.objects
     elif table_name == 'flights':
-        entries = Flight.objects.filter(active=True).all()
+        entries = Flight.objects.filter(active=True)
     else:
         return JsonResponse({"entries": []})
+
+    if id >= 0:
+        entries = entries.filter(id=id)
+    entries = entries.all()
 
     if max_entries < 0:
         return JsonResponse({"entries": [model_to_dict(r) for r in entries[start_index:]]})
     else:
         return JsonResponse({"entries": [model_to_dict(r) for r in entries[start_index:start_index + max_entries]]})
+
 
 def index(request: HttpRequest) -> HttpResponse:
     return render(request, 'index.html', {})

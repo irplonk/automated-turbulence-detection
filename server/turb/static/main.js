@@ -3,6 +3,7 @@ var height = 700;
 var active = d3.select(null);
 
 var showReportTooltips = false;
+var showFlightPaths = false;
 
 var projection = d3.geoMercator()
   .scale(2 * (width - 3) / (Math.PI))
@@ -34,6 +35,7 @@ svg.append("rect")
 var layer1 = svg.append('g');
 var layer2 = svg.append('g');
 var layer3 = svg.append('g');
+var layer4 = svg.append('g');
 
 var planeString = "";
 
@@ -108,7 +110,9 @@ function setMapData(us, airports) {
   layer1.append("path")
     .datum(topojson.mesh(us, us.features, function(a, b) { return a !== b; }))
     .attr("class", "mesh")
-    .attr("d", path);
+    .attr("d", path)
+    .attr("stroke", "blue")
+    .attr("stroke-width", 2);
 
   // Uncomment to see all of the airports
   // g.append("path")
@@ -148,6 +152,29 @@ function makeQuery(max, start, table, callback) {
     } else {
       params = queryString({"start": start, "table": table});
     }
+    url = url + params;
+    xhttp.onreadystatechange = processRequest;
+    function processRequest() {
+      if (xhttp.readyState === 4 && xhttp.status === 200) {
+        var response = JSON.parse(xhttp.response);
+        callback(response.entries);
+      }
+    }
+    xhttp.open("GET", url, true);
+    xhttp.send();
+}
+
+/**
+ * Makes call to retrieve information from server
+ * @param table the type of table from which to retrieve information
+ * @param id database id of the entry to retrieve
+ * @param callback the function to call with the response results
+ */
+function makeQueryById(table, id, callback) {
+    var xhttp = new XMLHttpRequest();
+    var url = "http://127.0.0.1:8000/query";
+    var params;
+    params = queryString({"table": table, "id": id});
     url = url + params;
     xhttp.onreadystatechange = processRequest;
     function processRequest() {
@@ -215,11 +242,11 @@ function makeTurbulence(reports) {
  */
 
 function makeFlights(flights) {
-  layer3.selectAll("#flight").remove();
+  layer4.selectAll("#flight").remove();
 
-  layer3.selectAll("path")
+  layer4.selectAll("path")
     .data(
-      flights.map(r => [projection([r.longitude, r.latitude]), r.bearing])
+      flights.map(r => [projection([r.longitude, r.latitude]), r.bearing, r.origin, r.destination])
              .filter(x => x[0] !== null)
     ).enter()
     .append("path")
@@ -227,7 +254,65 @@ function makeFlights(flights) {
     .attr("d", planeString)
     .attr("fill", "black")
     .attr("transform", function (x) {
-      return "translate(" + x[0][0] + "," + x[0][1] + ") rotate(" + x[1] + ") scale(0.25)"; });
+      return "translate(" + x[0][0] + "," + x[0][1] + ") rotate(" + x[1] + ") scale(0.25)"; })
+    .on("mouseover", x => showFlightPath(x));
+}
+
+function showFlightPath(flightArr) {
+  if (showFlightPaths) {
+    var origin;
+    makeQueryById("airports", flightArr[2],
+    function(x) {
+      if (x.length == 0) {
+        return;
+      }
+      var origin = x[0];
+      makeQueryById("airports", flightArr[3],
+      function(y) {
+        if (y.length == 0) {
+          return;
+        }
+        var destination = y[0];
+
+        var originCoord = [parseFloat(origin.longitude), parseFloat(origin.latitude)];
+        var destCoord = [parseFloat(destination.longitude), parseFloat(destination.latitude)];
+        var originProj = projection(originCoord);
+        var destProj = projection(destCoord);
+
+        var lineData =
+          [{"type": "Feature",
+                  "geometry": {
+                  "type": "LineString",
+                  "coordinates": [originCoord, destCoord]
+              }
+          }];
+
+          layer3.selectAll("#flight_path").remove();
+
+          layer3.selectAll("path")
+            .data(lineData)
+            .enter().append("path")
+            .attr("d", path)
+            .attr("id", "flight_path")
+            .attr("fill", "none")
+            .attr("stroke", "blue");
+
+          layer3.append("circle")
+            .attr("cx", originProj[0])
+            .attr("cy", originProj[1])
+            .attr("id", "flight_path")
+            .attr("fill", "blue")
+            .attr("r", 2);
+
+          layer3.append("circle")
+            .attr("cx", destProj[0])
+            .attr("cy", destProj[1])
+            .attr("id", "flight_path")
+            .attr("fill", "blue")
+            .attr("r", 2);
+      });
+    });
+  }
 }
 
 var reportTooltip = d3.tip()
@@ -282,6 +367,8 @@ function zoomed() {
     layer2.attr("transform", d3.event.transform);
     layer3.style("stroke-width", 1.5 / d3.event.transform.k + "px");
     layer3.attr("transform", d3.event.transform);
+    layer4.style("stroke-width", 1.5 / d3.event.transform.k + "px");
+    layer4.attr("transform", d3.event.transform);
 }
 
 
@@ -292,12 +379,22 @@ function stopped() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
-  var checkbox = document.getElementById("tubulence-info-toggle");
-  checkbox.addEventListener('change', function () {
-    if (checkbox.checked) {
+  var turbToggle = document.getElementById("tubulence-info-toggle");
+  turbToggle.addEventListener('change', function () {
+    if (turbToggle.checked) {
       showReportTooltips = true;
     } else {
       showReportTooltips = false;
+    }
+  });
+
+  var pathToggle = document.getElementById("flight-path-toggle");
+  pathToggle.addEventListener('change', function () {
+    if (pathToggle.checked) {
+      showFlightPaths = true;
+    } else {
+      showFlightPaths = false;
+      layer3.selectAll("#flight_path").remove();
     }
   });
 });
