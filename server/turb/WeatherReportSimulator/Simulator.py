@@ -15,6 +15,7 @@ from .Weather_Data.Weather_Fun import *
 
 FLIGHT_HEIGHT = 6000
 
+
 class Aircraft:
     """Represents an aircraft type."""
 
@@ -87,7 +88,7 @@ class WeatherReport:
     """Represents a weather report sent by a plane."""
 
     def __init__(self, time: datetime, flight: Flight, lat: float, lon: float,
-                alt: float, wind_x: float, wind_y: float, tke: float):
+                 alt: float, wind_x: float, wind_y: float, tke: float):
         """
         :param time: Date and time the weather report was received at.
         :param flight: Flight that created this weather report
@@ -108,6 +109,7 @@ class WeatherReport:
         self.tke = tke
         self.db_id = None
 
+
 def get_angular_distance(lat1, lon1, lat2, lon2):
     """
     Returns the angular great circle distance from the first
@@ -119,17 +121,20 @@ def get_angular_distance(lat1, lon1, lat2, lon2):
     lon2 = math.radians(lon2)
     dlat = lat2 - lat1
     dlon = lon2 - lon1
-    a = math.sin(dlat / 2)**2 + math.cos(lat1)*math.cos(lat2)*math.sin(dlon / 2)**2
-    c = 2*math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    a = math.sin(dlat / 2)**2 + math.cos(lat1) * \
+        math.cos(lat2) * math.sin(dlon / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return c
+
 
 def get_distance(lat1, lon1, lat2, lon2, alt):
     """
     Returns the great circle distance in meters from the first
     coordinate to the second coordinate at the given altitude
     """
-    r = 6371000 + alt # radius from center of Earth in meters
+    r = 6371000 + alt  # radius from center of Earth in meters
     return r * get_angular_distance(lat1, lon1, lat2, lon2)
+
 
 def get_inter_point(lat1, lon1, lat2, lon2, x):
     """
@@ -141,14 +146,17 @@ def get_inter_point(lat1, lon1, lat2, lon2, x):
     lon1 = math.radians(lon1)
     lat2 = math.radians(lat2)
     lon2 = math.radians(lon2)
-    a = math.sin((1 - x)*d) / math.sin(d)
+    a = math.sin((1 - x) * d) / math.sin(d)
     b = math.sin(x * d) / math.sin(d)
-    x = a*math.cos(lat1)*math.cos(lon1) + b*math.cos(lat2)*math.cos(lon2)
-    y = a*math.cos(lat1)*math.sin(lon1) + b*math.cos(lat2)*math.sin(lon2)
-    z = a*math.sin(lat1) + b*math.sin(lat2)
+    x = a * math.cos(lat1) * math.cos(lon1) + b * \
+        math.cos(lat2) * math.cos(lon2)
+    y = a * math.cos(lat1) * math.sin(lon1) + b * \
+        math.cos(lat2) * math.sin(lon2)
+    z = a * math.sin(lat1) + b * math.sin(lat2)
     lati = math.atan2(z, math.sqrt(x**2 + y**2))
     loni = math.atan2(y, x)
     return math.degrees(lati), math.degrees(loni)
+
 
 def get_bearing(lat1, lon1, lat2, lon2):
     """
@@ -160,7 +168,8 @@ def get_bearing(lat1, lon1, lat2, lon2):
     lat2 = math.radians(lat2)
     lon2 = math.radians(lon2)
     y = math.sin(lon2 - lon1) * math.cos(lat2)
-    x = math.cos(lat1)*math.sin(lat2) - math.sin(lat1)*math.cos(lat2)*math.cos(lon2 - lon1)
+    x = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * \
+        math.cos(lat2) * math.cos(lon2 - lon1)
     return math.degrees(math.atan2(y, x))
 
 
@@ -192,7 +201,8 @@ class FlightGenerator:
         plane_type = weighted_random(self._plane_probabilities)
         start_lat, start_lon, start_alt = self._airport_info[origin]
         end_lat, end_lon, end_alt = self._airport_info[dest]
-        flight_time = get_distance(start_lat, start_lon, end_lat, end_lon, FLIGHT_HEIGHT) / flight_speed
+        flight_time = get_distance(
+            start_lat, start_lon, end_lat, end_lon, FLIGHT_HEIGHT) / flight_speed
         bearing = get_bearing(start_lat, start_lon, end_lat, end_lon)
         return Flight(Airport(origin, origin, start_lat, start_lon, start_alt),
                       Airport(dest, dest, end_lat, end_lon, end_alt),
@@ -260,7 +270,6 @@ class FlightSimulator:
         self._active_flights = all_flights
         self._current_time = stop_time
 
-
     def get_location(self, flight):
         """Updates and returns the latitude, longitude, and bearing of an active flight.
 
@@ -279,9 +288,11 @@ class FlightSimulator:
             lon_end = flight.dest.lon
             alt_end = flight.dest.alt
 
-            percent_complete = (self.current_time - flight.start_time) / (flight.end_time - flight.start_time)
+            percent_complete = (
+                self.current_time - flight.start_time) / (flight.end_time - flight.start_time)
 
-            cur_lat, cur_lon = get_inter_point(lat_start, lon_start, lat_end, lon_end, percent_complete)
+            cur_lat, cur_lon = get_inter_point(
+                lat_start, lon_start, lat_end, lon_end, percent_complete)
             cur_bearing = get_bearing(cur_lat, cur_lon, lat_end, lon_end)
 
             flight.lat = cur_lat
@@ -333,7 +344,8 @@ class WeatherReportGenerator:
         flight = flights[randint(0, len(flights) - 1)]
         cur_lat, cur_lon, cur_alt = flight.lat, flight.lon, flight.alt
         report_time = current_time + timedelta(seconds=dt)
-        weather = self._weather.get_weather(cur_lat, cur_lon, cur_alt, report_time)
+        weather = self._weather.get_weather(
+            cur_lat, cur_lon, cur_alt, report_time)
         if weather is None:
             return None
         tke, uwnd, vwnd = weather
@@ -373,7 +385,7 @@ class WeatherReportSimulator:
         progressed_time = self._current_time
         while progressed_time < stop_time:
             new_report = self._report_generator.next_report(progressed_time,
-                self._flight_simulator.current_flights)
+                                                            self._flight_simulator.current_flights)
             if new_report is None:
                 break
             progressed_time = new_report.time
@@ -417,7 +429,6 @@ class WeatherReportSimulator:
         """
         return self._flight_simulator.current_flights
 
-
     @property
     def removed_flights(self):
         """Gets the flights which have completed in the last iteration.
@@ -446,19 +457,24 @@ class WeatherReportSimulator:
     def get_simulator(cls, flight_time: float=20, report_time: float=10, parallel: bool=False):
         data = Dataset(definitions.WEATHER_DATA_DIR, 'r', parallel=parallel)
         start_time = datetime(year=1800, month=1, day=1, hour=0, minute=0, second=0) \
-                     + timedelta(hours=data['time'][0])
+            + timedelta(hours=data['time'][0])
         try:
-            reg1, reg2 = pickle.load(open(definitions.INDEX_REGRESSION_DIR, 'rb'))
-            index_predictor = IndexPredictor(data['lat'], data['lon'], reg1, reg2)
+            reg1, reg2 = pickle.load(
+                open(definitions.INDEX_REGRESSION_DIR, 'rb'))
+            index_predictor = IndexPredictor(
+                data['lat'], data['lon'], reg1, reg2)
         except:
             index_predictor = IndexPredictor(data['lat'], data['lon'])
-            pickle.dump(index_predictor.get_predictors(), open(definitions.INDEX_REGRESSION_DIR, 'wb'))
+            pickle.dump(index_predictor.get_predictors(), open(
+                definitions.INDEX_REGRESSION_DIR, 'wb'))
         weather_model = WeatherModel(data, data, data, data, index_predictor)
         flight_generator = FlightGenerator(timedelta(seconds=flight_time))
         flight_simulator = FlightSimulator(start_time, flight_generator)
         # flight_simulator.progress(timedelta(hours=3))
-        report_generator = WeatherReportGenerator(weather_model, timedelta(seconds=report_time))
-        simulator = WeatherReportSimulator(flight_simulator, report_generator, timedelta(hours=1))
+        report_generator = WeatherReportGenerator(
+            weather_model, timedelta(seconds=report_time))
+        simulator = WeatherReportSimulator(
+            flight_simulator, report_generator, timedelta(hours=1))
         # simulator.progress(timedelta(hours=1))
         return simulator
 

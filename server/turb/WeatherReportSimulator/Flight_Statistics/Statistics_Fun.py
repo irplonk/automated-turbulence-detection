@@ -44,7 +44,7 @@ def airport_statistics():
     prob = {origin: count[origin] / total for origin in codes}
 
     conditional_prob = {origin: {dest: conditional_count[(origin, dest)] / conditional_total[origin]
-                        if (origin, dest) in conditional_count else 0 for dest in codes} for origin in codes}
+                                 if (origin, dest) in conditional_count else 0 for dest in codes} for origin in codes}
 
     return codes, prob, conditional_prob
 
@@ -53,6 +53,7 @@ def airport_info():
     """Returns a dictionary from an airport to its latitude, longitude, and altitude in meters."""
     file = open(definitions.AIRPORTS_DIR, 'r')
     reader = csv.reader(file, delimiter=',')
-    airports = {row[0]: (float(row[1]), float(row[2]), float(row[3])) for row in reader}
+    airports = {row[0]: (float(row[1]), float(row[2]), float(row[3]))
+                for row in reader}
     file.close()
     return airports

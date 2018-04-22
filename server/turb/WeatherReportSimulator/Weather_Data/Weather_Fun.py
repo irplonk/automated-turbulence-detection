@@ -24,17 +24,23 @@ class IndexPredictor:
         if index_1_reg is not None:
             self.index_1_reg = index_1_reg
         else:
-            x = [(lats[i, j], longs[i, j]) for i, j in product(range(lats.shape[0]), range(lats.shape[1]))]
-            index_1_y = [i for i, j in product(range(lats.shape[0]), range(lats.shape[1]))]
-            self.index_1_reg = KNeighborsRegressor(n_neighbors=1, metric=self._v.measure)
+            x = [(lats[i, j], longs[i, j])
+                 for i, j in product(range(lats.shape[0]), range(lats.shape[1]))]
+            index_1_y = [i for i, j in product(
+                range(lats.shape[0]), range(lats.shape[1]))]
+            self.index_1_reg = KNeighborsRegressor(
+                n_neighbors=1, metric=self._v.measure)
             self.index_1_reg.fit(x, index_1_y)
         if index_2_reg is not None:
             self.index_2_reg = index_2_reg
         else:
             if x is None:
-                x = [(lats[i, j], longs[i, j]) for i, j in product(range(lats.shape[0]), range(lats.shape[1]))]
-            index_2_y = [j for i, j in product(range(lats.shape[0]), range(lats.shape[1]))]
-            self.index_2_reg = KNeighborsRegressor(n_neighbors=1, metric=self._v.measure)
+                x = [(lats[i, j], longs[i, j]) for i, j in product(
+                    range(lats.shape[0]), range(lats.shape[1]))]
+            index_2_y = [j for i, j in product(
+                range(lats.shape[0]), range(lats.shape[1]))]
+            self.index_2_reg = KNeighborsRegressor(
+                n_neighbors=1, metric=self._v.measure)
             self.index_2_reg.fit(x, index_2_y)
 
     def predict(self, x, n: int=5):
@@ -53,13 +59,15 @@ class IndexPredictor:
     def _search_neighborhood(self, i: int, j: int, n: int, lat: float, lon: float):
         cutoff = 70
         best = (i, j)
-        best_dist = self._v.measure((self._lat[i, j], self._lon[i, j]), (lat, lon))
+        best_dist = self._v.measure(
+            (self._lat[i, j], self._lon[i, j]), (lat, lon))
         for di in range(-n, n + 1):
             for dj in range(-n, n + 1):
                 i_new = i + di
                 j_new = j + dj
                 if self._valid_index(i_new, j_new):
-                    dist = self._v.measure((self._lat[i_new, j_new], self._lon[i_new, j_new]), (lat, lon))
+                    dist = self._v.measure(
+                        (self._lat[i_new, j_new], self._lon[i_new, j_new]), (lat, lon))
                     if dist < best_dist:
                         best = (i_new, j_new)
                         best_dist = dist
@@ -80,16 +88,20 @@ class WeatherModel:
 
         :param file: File to return the data from.
         """
-        self._start_date = datetime(year=1800, month=1, day=1, hour=0, minute=0, second=0)
+        self._start_date = datetime(
+            year=1800, month=1, day=1, hour=0, minute=0, second=0)
         self._tke = tke
         self._uwnd = uwnd
         self._vwnd = vwnd
         self._hgt = hgt
-        self._min_time = self._start_date + timedelta(hours=self._tke['time'].actual_range[0])
-        self._max_time = self._start_date + timedelta(hours=self._tke['time'].actual_range[1])
+        self._min_time = self._start_date + \
+            timedelta(hours=self._tke['time'].actual_range[0])
+        self._max_time = self._start_date + \
+            timedelta(hours=self._tke['time'].actual_range[1])
         self._max_level, self._min_level = self._tke['level'].actual_range
         if index_predictor is None:
-            self._index_predictor = IndexPredictor(self._tke['lat'], self._tke['lon'])
+            self._index_predictor = IndexPredictor(
+                self._tke['lat'], self._tke['lon'])
         else:
             self._index_predictor = index_predictor
 
@@ -115,15 +127,17 @@ class WeatherModel:
         start_time = self._start_date + timedelta(hours=self._tke['time'][0])
         end_time = self._start_date + timedelta(hours=self._tke['time'][-1])
         time_ind_exact = (self._tke['time'].shape[0] - 1) * (time - start_time).total_seconds() \
-                         / (end_time - start_time).total_seconds()
+            / (end_time - start_time).total_seconds()
         time_ind_low = floor(time_ind_exact)
         time_ind_high = ceil(time_ind_exact)
         time_ind_coeff_1 = 1 if time_ind_low == time_ind_high else float(time_ind_exact - time_ind_low) \
-                                                                   / float(time_ind_high - time_ind_low)
+            / float(time_ind_high - time_ind_low)
         time_ind_coeff_2 = 1 - time_ind_coeff_1
 
-        hgt_min = min(self._hgt['hgt'][time_ind_low, 0, i, j], self._hgt['hgt'][time_ind_high, 0, i, j])
-        hgt_max = max(self._hgt['hgt'][time_ind_low, -1, i, j], self._hgt['hgt'][time_ind_high, -1, i, j])
+        hgt_min = min(self._hgt['hgt'][time_ind_low, 0, i, j],
+                      self._hgt['hgt'][time_ind_high, 0, i, j])
+        hgt_max = max(self._hgt['hgt'][time_ind_low, -1, i, j],
+                      self._hgt['hgt'][time_ind_high, -1, i, j])
 
         if height > hgt_max or height < hgt_min:
             return None
@@ -138,7 +152,8 @@ class WeatherModel:
 
         level_slope = self._hgt['hgt'][time_ind_low, height_ind_high, i, j] -\
             self._hgt['hgt'][time_ind_low, height_ind_low, i, j]
-        level_ind_exact = float((height - self._hgt['hgt'][time_ind_low, height_ind_low, i, j])) / level_slope
+        level_ind_exact = float(
+            (height - self._hgt['hgt'][time_ind_low, height_ind_low, i, j])) / level_slope
         level_ind_low = floor(level_ind_exact)
         level_ind_high = ceil(level_ind_exact)
         level_ind_coeff_1 = 1 if level_ind_low == level_ind_high else float(level_ind_exact - level_ind_low)\
@@ -156,16 +171,19 @@ class WeatherModel:
         """
 
         tke = level_ind_coeff_1 * time_ind_coeff_1 * self._tke['tke'][time_ind_low, level_ind_low, i, j]\
-               + level_ind_coeff_1 * time_ind_coeff_2 * self._tke['tke'][time_ind_high, level_ind_low, i, j]\
-               + level_ind_coeff_2 * time_ind_coeff_1 * self._tke['tke'][time_ind_low, level_ind_high, i, j]\
-               + level_ind_coeff_2 * time_ind_coeff_2 * self._tke['tke'][time_ind_high, level_ind_high, i, j]
+            + level_ind_coeff_1 * time_ind_coeff_2 * self._tke['tke'][time_ind_high, level_ind_low, i, j]\
+            + level_ind_coeff_2 * time_ind_coeff_1 * self._tke['tke'][time_ind_low, level_ind_high, i, j]\
+            + level_ind_coeff_2 * time_ind_coeff_2 * \
+            self._tke['tke'][time_ind_high, level_ind_high, i, j]
         uwnd = level_ind_coeff_1 * time_ind_coeff_1 * self._uwnd['uwnd'][time_ind_low, level_ind_low, i, j] \
-              + level_ind_coeff_1 * time_ind_coeff_2 * self._uwnd['uwnd'][time_ind_high, level_ind_low, i, j] \
-              + level_ind_coeff_2 * time_ind_coeff_1 * self._uwnd['uwnd'][time_ind_low, level_ind_high, i, j] \
-              + level_ind_coeff_2 * time_ind_coeff_2 * self._uwnd['uwnd'][time_ind_high, level_ind_high, i, j]
+            + level_ind_coeff_1 * time_ind_coeff_2 * self._uwnd['uwnd'][time_ind_high, level_ind_low, i, j] \
+            + level_ind_coeff_2 * time_ind_coeff_1 * self._uwnd['uwnd'][time_ind_low, level_ind_high, i, j] \
+            + level_ind_coeff_2 * time_ind_coeff_2 * \
+            self._uwnd['uwnd'][time_ind_high, level_ind_high, i, j]
         vwnd = level_ind_coeff_1 * time_ind_coeff_1 * self._vwnd['vwnd'][time_ind_low, level_ind_low, i, j] \
-              + level_ind_coeff_1 * time_ind_coeff_2 * self._vwnd['vwnd'][time_ind_high, level_ind_low, i, j] \
-              + level_ind_coeff_2 * time_ind_coeff_1 * self._vwnd['vwnd'][time_ind_low, level_ind_high, i, j] \
-              + level_ind_coeff_2 * time_ind_coeff_2 * self._vwnd['vwnd'][time_ind_high, level_ind_high, i, j]
+            + level_ind_coeff_1 * time_ind_coeff_2 * self._vwnd['vwnd'][time_ind_high, level_ind_low, i, j] \
+            + level_ind_coeff_2 * time_ind_coeff_1 * self._vwnd['vwnd'][time_ind_low, level_ind_high, i, j] \
+            + level_ind_coeff_2 * time_ind_coeff_2 * \
+            self._vwnd['vwnd'][time_ind_high, level_ind_high, i, j]
 
         return tke, uwnd, vwnd

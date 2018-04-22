@@ -1,209 +1,47 @@
-<!DOCTYPE html>
-{% load static %}
+<!DOCTYPE html> {% load static %}
 <meta charset="utf-8">
-<style>
-    body {
-        font: 14px sans-serif;
-        background: #EEEEEE;
-    }
-    .map-container {
-        position: absolute;
-        top: 50px;
-        left: 20px;
-        cursor: move;
-        cursor: grab;
-        cursor: -moz-grab;
-        cursor: -webkit-grab;
-    }
-    .map-container:active {
-        cursor: grabbing;
-        cursor: -moz-grabbing;
-        cursor: -webkit-grabbing;
-    }
-    .background {
-        fill: #B3E5FC;
-        pointer-events: all;
-        box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.25);
-    }
-    .feature {
-        fill: #4CAF50;
-    }
-    .feature.active {
-        fill: orange;
-    }
-    .mesh {
-        fill: none;
-        stroke: #fff;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-    }
-    h1 {
-        text-align: center;
-    }
-    h2{
-        text-align: center;
-    }
-    script {
-        left:10px;
-        width:150%;
-    }
 
-    instructions {
-        position: absolute;
-        top: 50px;
-        right: 20px;
-        width: 300px;
-        padding: 0px 10px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-        background-color: white;
-        border-radius: 2px;
-    }
+<head>
+  <link rel="stylesheet" href="{% static "index.css" %}">
+</head>
 
-    tooltips {
-        position: absolute;
-        top: 330px;
-        right: 20px;
-        width: 300px;
-        padding: 5px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-        background-color: white;
-        border-radius: 2px;
-    }
-    .d3-tip {
-        line-height: 1;
-        font-weight: bold;
-        padding: 10px;
-        background: rgba(0, 0, 0, 0.8);
-        color: #fff;
-        border-radius: 0px;
-    }
-    /* Creates a small triangle extender for the tooltip */
-    .d3-tip:after {
-        box-sizing: border-box;
-        display: inline;
-        font-size: 10px;
-        width: 100%;
-        line-height: 1;
-        color: rgba(0, 0, 0, 0.8);
-        content: "\25BC";
-        position: absolute;
-        text-align: center;
-    }
-    /* Style northward tooltips differently */
-    .d3-tip.n:after {
-        margin: -1px 0 0 0;
-        top: 100%;
-        left: 0;
-    }
-    * {
-      box-sizing: border-box;
-      font-family: helvetica,arial,sans-serif;
-    }
-    html {
-      height: 100%;
-    }
-    .switch-input {
-  display: none;
-}
-.switch-label {
-  position: relative;
-  display: inline-block;
-  min-width: 112px;
-  cursor: pointer;
-  font-weight: 500;
-  text-align: left;
-  margin: 16px;
-  padding: 16px 0 16px 44px;
-}
-.switch-label:before, .switch-label:after {
-  content: "";
-  position: absolute;
-  margin: 0;
-  outline: 0;
-  top: 50%;
-  -ms-transform: translate(0, -50%);
-  -webkit-transform: translate(0, -50%);
-  transform: translate(0, -50%);
-  -webkit-transition: all 0.3s ease;
-  transition: all 0.3s ease;
-}
-.switch-label:before {
-  left: 1px;
-  width: 34px;
-  height: 14px;
-  background-color: rgba(0, 0, 0, 0.38);
-  border-radius: 8px;
-}
-.switch-label:after {
-  left: 0;
-  width: 20px;
-  height: 20px;
-  background-color: #FAFAFA;
-  border-radius: 50%;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-}
-.switch-label .toggle--on {
-  display: none;
-}
-.switch-label .toggle--off {
-  display: inline-block;
-}
-.switch-input:checked + .switch-label:before {
-  background-color: #2196F380;
-}
-.switch-input:checked + .switch-label:after {
-  background-color: #2196F3;
-  -ms-transform: translate(80%, -50%);
-  -webkit-transform: translate(80%, -50%);
-  transform: translate(80%, -50%);
-}
-.switch-input:checked + .switch-label .toggle--on {
-  display: inline-block;
-}
-.switch-input:checked + .switch-label .toggle--off {
-  display: none;
-}
-</style>
-<h1 style="margin:10px">Automated Turbulence Analysis</h1>
 <body onresize="resize()">
-    <div id="map-container" class="map-container">
-      <svg style="box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);">
-      </svg>
-    </div>
-    <instructions>
-        <h2>Instructions</h2>
-        <h3>Click and Drag</h3>
-        <p>Click and drag on the map to view more of the US, like Hawaii and Alaska. </p>
-        <h3>Toggle Tooltip</h3>
-        <p>To view information when hovering over turbulence or an
-           airplane, turn the tool tip on.To not view detailed
-           information, turn the tooltip off.</p>
-    </instructions>
-    <tooltips>
-      <input type="checkbox" id="tubulence-info-toggle" name="tubulence-info-toggle" class="switch-input" checked>
-        <label for="tubulence-info-toggle" class="switch-label">
-          <span class="toggle--on" style="font-weight: bold;">Turbulence Information On</span>
-          <span class="toggle--off" style="font-weight: bold;">Turbulence Information Off</span>
+  <h1 style="margin:10px">Automated Turbulence Analysis</h1>
+  <div id="map-container" class="map-container">
+    <svg class="map"></svg>
+  </div>
+  <instructions>
+    <h2>Instructions</h2>
+    <h3>Click and Drag</h3>
+    <p>Click and drag on the map to view more of the US, like Hawaii and Alaska. </p>
+    <h3>Toggle Tooltip</h3>
+    <p>To view information when hovering over turbulence or an airplane, turn the tool tip on.To not view detailed information, turn the tooltip off.</p>
+  </instructions>
+  <tooltips>
+    <input type="checkbox" id="tubulence-info-toggle" name="tubulence-info-toggle" class="switch-input" checked>
+    <label for="tubulence-info-toggle" class="switch-label">
+          <span class="toggle--on">Turbulence Information On</span>
+          <span class="toggle--off">Turbulence Information Off</span>
         </label>
-      </input>
+    </input>
 
-      <input type="checkbox" id="flight-path-toggle" name="flight-path-toggle" class="switch-input">
-        <label for="flight-path-toggle" class="switch-label">
-          <span class="toggle--on" style="font-weight: bold;">Flight Paths On</span>
-          <span class="toggle--off" style="font-weight: bold;">Flight Paths Off</span>
+    <input type="checkbox" id="flight-path-toggle" name="flight-path-toggle" class="switch-input">
+    <label for="flight-path-toggle" class="switch-label">
+          <span class="toggle--on">Flight Paths On</span>
+          <span class="toggle--off">Flight Paths Off</span>
         </label>
-      </input>
-    </tooltips>
+    </input>
+  </tooltips>
 </body>
 
 <script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://d3js.org/topojson.v1.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
-<script src="./static/d3-tip.js"></script>
-<script src="{% static "main.js" %}"></script>
+<script src="{% static "d3-tip.js" %}"></script>
+<script src="{% static "index.js" %}"></script>
 <script>
-d3.queue()
-    .defer(d3.json, "{% static "us.json" %}")
+  d3.queue()
+    .defer(d3.json, "{% static "map.json" %}")
     .defer(d3.json, "{% static "plane_svg.json" %}")
     .await(ready);
 </script>

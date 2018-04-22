@@ -57,8 +57,11 @@ typings/
 # dotenv environment variables file
 .env
 
+# Workspace files
+.idea/
+
 # Compiled python files
 *.pyc
 
-# Large weather data files
+# Large files
 *.nc

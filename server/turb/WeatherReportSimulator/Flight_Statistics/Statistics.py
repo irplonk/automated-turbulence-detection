@@ -71,7 +71,8 @@ for origin in codes_sorted:
 conditional_counts.close()
 
 
-conditional_probabilities = open('Conditional_Probabilities.csv', 'w', newline='')
+conditional_probabilities = open(
+    'Conditional_Probabilities.csv', 'w', newline='')
 writer = csv.writer(conditional_probabilities, delimiter=',')
 
 writer.writerow(['Origin/Destination'] + codes_sorted)
@@ -81,4 +82,3 @@ for origin in codes_sorted:
                                 if (origin, dest) in conditional_count else 0 for dest in codes_sorted])
 
 conditional_probabilities.close()
-

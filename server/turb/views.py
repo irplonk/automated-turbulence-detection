@@ -11,11 +11,13 @@ from .WeatherReportSimulator import Simulator
 from .WeatherReportSimulator.Multithreading import SimulationThreadManager
 from .db_interface import *
 
+
 class SimulationForm(forms.Form):
     flight_time = forms.FloatField(label='flight_time', initial=10)
     report_time = forms.FloatField(label='report_time', initial=20)
     update_time = forms.FloatField(label='update_time', initial=1)
     time_per_update = forms.FloatField(label='time_per_update', initial=100)
+
 
 class SimulationView(TemplateView):
     sim_state = 'stopped'
@@ -29,13 +31,13 @@ class SimulationView(TemplateView):
     def get(self, request: HttpRequest) -> HttpResponse:
         form = SimulationForm()
         return render(request, 'simulation.html',
-            {
-                'sim_state': SimulationView.sim_state,
-                'cur_flight_time': SimulationView.cur_flight_time,
-                'cur_report_time': SimulationView.cur_report_time,
-                'cur_update_time': SimulationView.cur_update_time,
-                'cur_time_per_update': SimulationView.cur_time_per_update
-        })
+                      {
+                          'sim_state': SimulationView.sim_state,
+                          'cur_flight_time': SimulationView.cur_flight_time,
+                          'cur_report_time': SimulationView.cur_report_time,
+                          'cur_update_time': SimulationView.cur_update_time,
+                          'cur_time_per_update': SimulationView.cur_time_per_update
+                      })
 
     def post(self, request: HttpRequest) -> HttpResponse:
         form = SimulationForm(request.POST)
@@ -56,7 +58,8 @@ class SimulationView(TemplateView):
                     SimulationView.cur_update_time = update_time
                     time_per_update = form.cleaned_data['time_per_update']
                     SimulationView.cur_time_per_update = time_per_update
-                    t = SimulationThreadManager(flight_time, report_time, update_time, time_per_update, 1)
+                    t = SimulationThreadManager(
+                        flight_time, report_time, update_time, time_per_update, 1)
                     t.start()
                     SimulationView.simulation_thread = t
                     SimulationView.sim_state = 'running'
@@ -68,13 +71,14 @@ class SimulationView(TemplateView):
                 SimulationView.simulation_thread.unpause()
                 SimulationView.sim_state = 'running'
         return render(request, 'simulation.html',
-            {
-                'sim_state': SimulationView.sim_state,
-                'cur_flight_time': SimulationView.cur_flight_time,
-                'cur_report_time': SimulationView.cur_report_time,
-                'cur_update_time': SimulationView.cur_update_time,
-                'cur_time_per_update': SimulationView.cur_time_per_update
-        })
+                      {
+                          'sim_state': SimulationView.sim_state,
+                          'cur_flight_time': SimulationView.cur_flight_time,
+                          'cur_report_time': SimulationView.cur_report_time,
+                          'cur_update_time': SimulationView.cur_update_time,
+                          'cur_time_per_update': SimulationView.cur_time_per_update
+                      })
+
 
 def display(request: HttpRequest) -> HttpResponse:
     max_entries = safe_cast(request.GET.get('max', -1), int, -1)
@@ -89,7 +93,8 @@ def display(request: HttpRequest) -> HttpResponse:
         db_attrs = ['airport_code', 'latitude', 'longitude', 'altitude']
     elif table_name == 'flights':
         entries = Flight.objects.all()
-        db_attrs = ['identifier', 'active', 'start_time', 'latitude', 'longitude', 'bearing', 'altitude']
+        db_attrs = ['identifier', 'active', 'start_time',
+                    'latitude', 'longitude', 'bearing', 'altitude']
     elif table_name == 'reports':
         entries = WeatherReport.objects.all()
         db_attrs = ['time', 'latitude', 'longitude', 'altitude',
@@ -97,24 +102,27 @@ def display(request: HttpRequest) -> HttpResponse:
     else:
         return HttpResponse('Invalid table name {}'.format(table_name))
     if max_entries < 0:
-        entries = [[getattr(e, attr) for attr in db_attrs] for e in entries[start_index:]]
+        entries = [[getattr(e, attr) for attr in db_attrs]
+                   for e in entries[start_index:]]
     else:
-        entries = [[getattr(e, attr) for attr in db_attrs] for e in entries[start_index:start_index + max_entries]]
+        entries = [[getattr(e, attr) for attr in db_attrs]
+                   for e in entries[start_index:start_index + max_entries]]
 
     return render(request, 'display_db.html',
-        {'entries': entries,
-        'db_attrs': db_attrs,
-        'table': table_name,
-        'max_entries': max_entries,
-        'start_index': start_index,
-        'end_index': start_index + len(entries) - 1})
+                  {'entries': entries,
+                   'db_attrs': db_attrs,
+                   'table': table_name,
+                   'max_entries': max_entries,
+                   'start_index': start_index,
+                   'end_index': start_index + len(entries) - 1})
+
 
 def query(request: HttpRequest) -> HttpResponse:
     max_entries = safe_cast(request.GET.get('max', -1), int, -1)
     start_index = safe_cast(request.GET.get('start', 0), int, 0)
     id = safe_cast(request.GET.get('id', -1), int, -1)
     table_name = request.GET.get('table', '')
-    
+
     if table_name == 'airplanes':
         entries = Aircraft.objects
     elif table_name == 'airports':
@@ -138,6 +146,7 @@ def query(request: HttpRequest) -> HttpResponse:
 
 def index(request: HttpRequest) -> HttpResponse:
     return render(request, 'index.html', {})
+
 
 def safe_cast(val, typ, default):
     try:

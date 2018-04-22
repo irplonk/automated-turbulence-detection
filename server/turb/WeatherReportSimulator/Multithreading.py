@@ -6,6 +6,7 @@ import time
 from datetime import timedelta
 import pytz
 
+
 class SimulationThreadManager:
     """Holds multiple threads used for flight simulation.
     Provides methods to start, stop, pause and unpause all threads.
@@ -29,7 +30,8 @@ class SimulationThreadManager:
         self._paused = False
         self._stopped = False
         self._running = False
-        self._threads = [SimulationThread(flight_time * num_threads, report_time * num_threads, update_time, time_per_update, num_threads > 1) for _ in range(num_threads)]
+        self._threads = [SimulationThread(flight_time * num_threads, report_time * num_threads,
+                                          update_time, time_per_update, num_threads > 1) for _ in range(num_threads)]
 
     def start(self):
         """Starts all of the threads held by this manager."""
@@ -96,7 +98,8 @@ class SimulationThread(threading.Thread):
         self._report_time = report_time
         self._update_time = update_time
         self._time_per_update = time_per_update
-        self._sim = Simulator.WeatherReportSimulator.get_simulator(flight_time, report_time, parallel=parallel)
+        self._sim = Simulator.WeatherReportSimulator.get_simulator(
+            flight_time, report_time, parallel=parallel)
         self._stop_event = threading.Event()
         self._unpause_event = threading.Event()
         self._unpause_event.set()
@@ -126,8 +129,8 @@ class SimulationThread(threading.Thread):
             if dif < self._update_time:
                 time.sleep(self._update_time - dif)
             else:
-                print('simulation progressing ' + str(dif - self._update_time) + 's too slow')
-
+                print('simulation progressing ' +
+                      str(dif - self._update_time) + 's too slow')
 
     def stop(self):
         """Stops this thread. Cannot be started again once stopped."""
