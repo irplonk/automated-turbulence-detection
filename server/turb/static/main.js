@@ -2,7 +2,7 @@ var width = 1000;
 var height = 700;
 var active = d3.select(null);
 
-var tog = false;
+var showReportTooltips = false;
 
 var projection = d3.geoMercator()
   .scale(2 * (width - 3) / (Math.PI))
@@ -205,7 +205,7 @@ function makeTurbulence(reports) {
     .attr("cy", function (x) { return x[0][1]; })
     .attr("r", 8)
     .attr("opacity", 1.0)
-    .on("mouseover", reportTooltip.show) // Add mouse hover tooltip listeners
+    .on("mouseover", function(x) { if (showReportTooltips) { reportTooltip.show(x); } }) // Add mouse hover tooltip listeners
     .on("mouseout", reportTooltip.hide);
 }
 
@@ -239,10 +239,8 @@ var reportTooltip = d3.tip()
     var timeOptions = {
       month: "short", day: "numeric", hour: "2-digit", minute: "2-digit"
     };
-    if (tog == true) {
-      return "<h5 style='color:white'>(" + inv[1].toFixed(4) + ", " + inv[0].toFixed(4) + ")<h5>"
-        + "<h5 style='color:white'>" + time.toLocaleTimeString("en-US", timeOptions) + "<h5>";
-    }
+    return "<h5 style='color:white'>(" + inv[1].toFixed(4) + ", " + inv[0].toFixed(4) + ")<h5>"
+      + "<h5 style='color:white'>" + time.toLocaleTimeString("en-US", timeOptions) + "<h5>";
   })
   .style("fill", "white");
 
@@ -293,19 +291,14 @@ function stopped() {
     if (d3.event.defaultPrevented) d3.event.stopPropagation();
 }
 
-
 document.addEventListener('DOMContentLoaded', function () {
   var checkbox = document.querySelector('input[type="checkbox"]');
 
   checkbox.addEventListener('change', function () {
     if (checkbox.checked) {
-      // do this
-      console.log('Checked');
-      tog = true;
+      showReportTooltips = true;
     } else {
-      // do that
-      console.log('Not checked');
-      tog = false;
+      showReportTooltips = false;
     }
   });
 });
