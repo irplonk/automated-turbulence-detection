@@ -20,6 +20,7 @@
     .background {
         fill: #B3E5FC;
         pointer-events: all;
+        box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.25);
     }
     .feature {
         fill: #4CAF50;
@@ -47,8 +48,20 @@
         position: absolute;
         right: 20px;
         width: 25%;
-        border: 2px solid black;
         padding: 5px;
+        box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.25);
+        background-color: white;
+        margin-top:-700px;
+    }
+
+    tooltips {
+        position: absolute;
+        right: 20px;
+        width: 25%;
+        padding: 5px;
+        box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.25);
+        background-color: white;
+        margin-top:-400px;
     }
     .d3-tip {
         line-height: 1;
@@ -148,31 +161,33 @@
 <h1>US Turbulence</h1>
 <body>
     <div class="grabbable" width="1000px" height="700px">
-      <svg width="1000px" height="700px">
+      <svg width="1000px" height="700px" style="box-shadow:0 3px 1px -2px rgba(0, 0, 0, 0.25)">
       </svg>
     </div>
-    <instructions>
+    <instructions margin-top:-700px>
         <h2>Instructions</h2>
         <h3>Click and Drag</h3>
         <p>Click and drag on the map to view more of the US, like Hawaii and Alaska. </p>
         <h3>Toggle Tooltip</h3>
-        <p>To view information when hovering over turbulence, turn the tool tip on.
-        To not view detailed information, turn the tooltip off.</p>
+        <p>To view information when hovering over turbulence or an
+           airplane, turn the tool tip on.To not view detailed
+           information, turn the tooltip off.</p>
     </instructions>
+    <tooltips>
+      <input type="checkbox" id="tubulence-info-toggle" name="tubulence-info-toggle" class="switch-input">
+        <label for="tubulence-info-toggle" class="switch-label">
+          <span class="toggle--on">Turbulence Information On</span>
+          <span class="toggle--off">Turbulence Information Off</span>
+        </label>
+      </input>
 
-  <input type="checkbox" id="tubulence-info-toggle" name="tubulence-info-toggle" class="switch-input">
-    <label for="tubulence-info-toggle" class="switch-label">
-      <span class="toggle--on">Turbulence Information On</span>
-      <span class="toggle--off">Turbulence Information Off</span>
-    </label>
-  </input>
-
-  <input type="checkbox" id="flight-path-toggle" name="flight-path-toggle" class="switch-input">
-    <label for="flight-path-toggle" class="switch-label">
-      <span class="toggle--on">Flight Paths On</span>
-      <span class="toggle--off">Flight Paths Off</span>
-    </label>
-  </input>
+      <input type="checkbox" id="flight-path-toggle" name="flight-path-toggle" class="switch-input">
+        <label for="flight-path-toggle" class="switch-label">
+          <span class="toggle--on">Flight Paths On</span>
+          <span class="toggle--off">Flight Paths Off</span>
+        </label>
+      </input>
+    </tooltips>
 </body>
 
 <script src="https://d3js.org/d3.v4.min.js"></script> <!-- Inclusion of d3 v4 -->
