@@ -1,36 +1,70 @@
-var width = 1000;
-var height = 700;
+var body = d3.select("body");
+var svg = d3.select("svg");
+var container = d3.select("#map-container");
 var active = d3.select(null);
+var layer0 = svg.append('g');
 
-var showReportTooltips = false;
-var showFlightPaths = false;
+var width = window.innerWidth - 360;
+if (width < 400) {
+  width = 400;
+}
+var height = window.innerHeight - 70;
+if (height < 400) {
+  height = 400;
+}
+var scale = 2 * (width - 3) / (Math.PI);
+var scaleRatio = scale / 675;
+
+svg.style("height", height)
+   .style("width", width);
+
+container.style("height", height)
+         .style("width", width);
 
 var projection = d3.geoMercator()
-  .scale(2 * (width - 3) / (Math.PI))
-  .translate([1.5 * width, 1.125 * height]);
+  .scale(scale)
+  .translate([1.55 * width, height]);
 
-var path = d3.geoPath() // updated for d3 v4
-  .projection(projection);
+layer0.append("rect")
+  .attr("class", "background")
+  .attr("width", width)
+  .attr("height", height);
 
-/*
-var container = d3.select("body")
-  .append("div")
-  .attr("class", "grabbable");
-*/
+function resize() {
+  width = window.innerWidth - 360;
+  if (width < 400) {
+    width = 400;
+  }
+  height = window.innerHeight - 70;
+  if (height < 400) {
+    height = 400;
+  }
 
-var svg = d3.select("svg");
+  svg.style("height", height)
+     .style("width", width);
+
+  container.style("height", height)
+           .style("width", width);
+
+  layer0.select("rect").remove();
+  layer0.append("rect")
+    .attr("class", "background")
+    .attr("width", width)
+    .attr("height", height);
+
+  makeColorLegend(height - 60, width - 325, 300, 15, 0.75, colorScale);
+}
+
+var showReportTooltips = true;
+var showFlightPaths = false;
+
+var path = d3.geoPath().projection(projection);
 
 var zoom = d3.zoom()
   .scaleExtent([1, 8])
   .on("zoom", zoomed);
 
 svg.call(zoom);
-
-svg.append("rect")
-  .attr("class", "background")
-  .attr("width", width)
-  .attr("height", height)
-  .on("click", reset);
 
 var layer1 = svg.append('g');
 var layer2 = svg.append('g');
@@ -39,7 +73,7 @@ var layer4 = svg.append('g');
 
 var planeString = "";
 
-function ready(error, us, airports, plane) {
+function ready(error, us, plane) {
   if (error) throw error;
 
   planeString = plane.path;
@@ -51,13 +85,11 @@ function ready(error, us, airports, plane) {
   var doFlights = true;
 
   // Initialize data
-  setMapData(us, airports);
+  setMapData(us);
   updateLiveData(doReports, doFlights);
 
-  // Update data every 10 seconds
-  setInterval(function(){
-    updateLiveData(doReports, doFlights);
-  }, 5000);
+  // Update data every 5 seconds
+  setInterval(function() { updateLiveData(doReports, doFlights) }, 5000);
 }
 
 /**
@@ -70,19 +102,10 @@ function ready(error, us, airports, plane) {
  * @param colorFun coloring function
  */
 function makeColorLegend(top, left, width, height, maxVal, colorFun) {
-  /*
-  var rects = svg.selectAll(".rects")
-    .data(d3.range(width))
-    .enter()
-    .append("rect")
-    .attr("y", top)
-    .attr("height", height)
-    .attr("x", (d, i) => left + i)
-    .attr("width", 2)
-    .attr("fill", d => colorFun(maxVal / width * d));
-  */
+  svg.select("#legend").remove();
 
   svg.append("g")
+    .attr("id", "legend")
     .attr("class", "legendSequential")
     .attr("transform", "translate(" + left.toString() + "," + top.toString() + ")");
 
@@ -100,25 +123,21 @@ function makeColorLegend(top, left, width, height, maxVal, colorFun) {
     .call(legendSequential);
 }
 
-function setMapData(us, airports) {
+function setMapData(us) {
+  layer1.selectAll("#us_path").remove();
   layer1.selectAll("path")
     .data(us.features)
     .enter().append("path")
+    .attr("id", "us_path")
     .attr("d", path)
     .attr("class", "feature");
 
+  layer1.selectAll("#us_mesh").remove();
   layer1.append("path")
     .datum(topojson.mesh(us, us.features, function(a, b) { return a !== b; }))
     .attr("class", "mesh")
-    .attr("d", path)
-    .attr("stroke", "blue")
-    .attr("stroke-width", 2);
-
-  // Uncomment to see all of the airports
-  // g.append("path")
-  //     .datum(topojson.feature(airports, airports.objects.airports))
-  //     .attr("class", "points")
-  //     .attr("d", path);
+    .attr("id", "us_mesh")
+    .attr("d", path);
 }
 
 
@@ -212,7 +231,7 @@ function queryString(args) {
  */
 var colorScale = d3.scaleLinear()
   .domain([0, 1]) //can change domain
-  .range(["yellow", "red"]);
+  .range(["#FFEB3B", "#F44336"]);
 
 /**
  * Adds turbulence information to the map
@@ -230,8 +249,7 @@ function makeTurbulence(reports) {
     .attr("fill", function (x) { return colorScale(x[1]); })
     .attr("cx", function (x) { return x[0][0]; })
     .attr("cy", function (x) { return x[0][1]; })
-    .attr("r", 8)
-    .attr("opacity", 1.0)
+    .attr("r", 8 * scaleRatio)
     .on("mouseover", function(x) { if (showReportTooltips) { reportTooltip.show(x); } }) // Add mouse hover tooltip listeners
     .on("mouseout", reportTooltip.hide);
 }
@@ -254,7 +272,7 @@ function makeFlights(flights) {
     .attr("d", planeString)
     .attr("fill", "black")
     .attr("transform", function (x) {
-      return "translate(" + x[0][0] + "," + x[0][1] + ") rotate(" + x[1] + ") scale(0.25)"; })
+      return "translate(" + x[0][0] + "," + x[0][1] + ") rotate(" + x[1] + ") scale(" + (0.25 * scaleRatio) + ")"; })
     .on("mouseover", x => showFlightPath(x));
 }
 
@@ -295,20 +313,21 @@ function showFlightPath(flightArr) {
             .attr("d", path)
             .attr("id", "flight_path")
             .attr("fill", "none")
-            .attr("stroke", "blue");
+            .attr("stroke-width", "1.5")
+            .attr("stroke", "#3F51B5");
 
           layer3.append("circle")
             .attr("cx", originProj[0])
             .attr("cy", originProj[1])
             .attr("id", "flight_path")
-            .attr("fill", "blue")
+            .attr("fill", "#3F51B5")
             .attr("r", 2);
 
           layer3.append("circle")
             .attr("cx", destProj[0])
             .attr("cy", destProj[1])
             .attr("id", "flight_path")
-            .attr("fill", "blue")
+            .attr("fill", "#3F51B5")
             .attr("r", 2);
       });
     });
@@ -330,35 +349,6 @@ var reportTooltip = d3.tip()
   .style("fill", "white");
 
 svg.call(reportTooltip);
-
-function clicked(d) {
-    if (active.node() === this) return reset();
-    active.classed("active", false);
-    active = d3.select(this).classed("active", true);
-
-    var bounds = path.bounds(d),
-        dx = bounds[1][0] - bounds[0][0],
-        dy = bounds[1][1] - bounds[0][1],
-        x = (bounds[0][0] + bounds[1][0]) / 2,
-        y = (bounds[0][1] + bounds[1][1]) / 2,
-        scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / width, dy / height))),
-        translate = [width / 2 - scale * x, height / 2 - scale * y];
-
-    svg.transition()
-        .duration(750)
-        // .call(zoom.translate(translate).scale(scale).event); // not in d3 v4
-        .call( zoom.transform, d3.zoomIdentity.translate(translate[0],translate[1]).scale(scale) ); // updated for d3 v4
-}
-
-function reset() {
-    active.classed("active", false);
-    active = d3.select(null);
-
-    svg.transition()
-      .duration(750)
-      // .call( zoom.transform, d3.zoomIdentity.translate(0, 0).scale(1) ); // not in d3 v4
-      .call( zoom.transform, d3.zoomIdentity ); // updated for d3 v4
-}
 
 function zoomed() {
     layer1.style("stroke-width", 1.5 / d3.event.transform.k + "px");
