@@ -3,11 +3,8 @@ from random import randint, uniform
 from netCDF4 import Dataset
 import time
 import pickle
-from collections import deque
 import copy
 import math
-import numpy as np
-import matplotlib.pyplot as plt
 from . import definitions
 from .Flight_Statistics.Statistics_Fun import airport_statistics, airport_info
 from .Weather_Data.Weather_Fun import *
