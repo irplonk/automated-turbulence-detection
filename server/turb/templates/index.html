@@ -1,37 +1,48 @@
-<!DOCTYPE html>
-{% load static %}
+<!DOCTYPE html> {% load static %}
 <meta charset="utf-8">
-<style>
 
-    .background {
-        fill: none;
-        pointer-events: all;
-    }
+<head>
+  <link rel="stylesheet" href="{% static "index.css" %}">
+</head>
 
-    .feature {
-        fill: #ccc;
-        cursor: pointer;
-    }
+<body onresize="resize()">
+  <h1 style="margin:10px">Automated Turbulence Analysis</h1>
+  <div id="map-container" class="map-container">
+    <svg class="map"></svg>
+  </div>
+  <instructions>
+    <h2>Instructions</h2>
+    <h3>Click and Drag</h3>
+    <p>Click and drag on the map to view more of the US, like Hawaii and Alaska. </p>
+    <h3>Toggle Tooltip</h3>
+    <p>To view information when hovering over turbulence or an airplane, turn the tool tip on.To not view detailed information, turn the tooltip off.</p>
+  </instructions>
+  <tooltips>
+    <input type="checkbox" id="tubulence-info-toggle" name="tubulence-info-toggle" class="switch-input" checked>
+    <label for="tubulence-info-toggle" class="switch-label">
+          <span class="toggle--on">Turbulence Information On</span>
+          <span class="toggle--off">Turbulence Information Off</span>
+        </label>
+    </input>
 
-    .feature.active {
-        fill: orange;
-    }
+    <input type="checkbox" id="flight-path-toggle" name="flight-path-toggle" class="switch-input">
+    <label for="flight-path-toggle" class="switch-label">
+          <span class="toggle--on">Flight Paths On</span>
+          <span class="toggle--off">Flight Paths Off</span>
+        </label>
+    </input>
+  </tooltips>
+</body>
 
-    .mesh {
-        fill: none;
-        stroke: #fff;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-    }
-
-</style>
-<body>
-<script src="https://d3js.org/d3.v4.min.js"></script> <!-- Inclusion of d3 v4 -->
+<script src="https://d3js.org/d3.v4.min.js"></script>
 <script src="https://d3js.org/topojson.v1.min.js"></script>
-<script src="{% static "main.js" %}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.min.js"></script>
+<script src="{% static "d3-tip.js" %}"></script>
+<script src="{% static "index.js" %}"></script>
 <script>
-d3.queue()
-    .defer(d3.json, "{% static "us.json" %}")
-    .defer(d3.json, "{% static "airports.json" %}")
+  d3.queue()
+    .defer(d3.json, "{% static "map.json" %}")
+    .defer(d3.json, "{% static "plane_svg.json" %}")
     .await(ready);
 </script>
+</body>

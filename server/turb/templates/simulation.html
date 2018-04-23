@@ -1,72 +1,65 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<style>
-table, th, td {
-    border: 1px solid black;
-}
-</style>
+  <style>
+    table,
+    th,
+    td {
+      border: 1px solid black;
+    }
+  </style>
+
 </head>
+
 <body>
-  <h1>Simulation Control</h1>
-  {% if sim_state == 'running' %}
-    <p>Simulation running</p>
+  <h1>Simulation Control</h1> {% if sim_state == 'running' %}
+  <p>Simulation running</p>
   {% elif sim_state == 'stopped' %}
-    <p>Simulation stopped</p>
+  <p>Simulation stopped</p>
   {% elif sim_state == 'paused' %}
-    <p>Simulation paused</p>
+  <p>Simulation paused</p>
   {% endif %}
 
   <form action="/simulation/" method="post">
     {% if sim_state == 'running' %}
-      <input type="submit" name="start_stop" value="Stop"/>
-    {% elif sim_state == 'stopped' %}
-      <input type="submit" name="start_stop" value="Start"/>
-    {% elif sim_state == 'paused' %}
-      <input type="submit" name="start_stop" value="Stop"/>
-    {% endif %}
-
-    {% if sim_state == 'running' %}
-      <input type="submit" name="pause" value="Pause"/>
-    {% elif sim_state == 'stopped' %}
-      <input type="submit" name="pause" value="Pause" disabled/>
-    {% elif sim_state == 'paused' %}
-      <input type="submit" name="pause" value="Resume"/>
-    {% endif %}
+    <input type="submit" name="start_stop" value="Stop" /> {% elif sim_state == 'stopped' %}
+    <input type="submit" name="start_stop" value="Start" /> {% elif sim_state == 'paused' %}
+    <input type="submit" name="start_stop" value="Stop" /> {% endif %} {% if sim_state == 'running' %}
+    <input type="submit" name="pause" value="Pause" /> {% elif sim_state == 'stopped' %}
+    <input type="submit" name="pause" value="Pause" disabled/> {% elif sim_state == 'paused' %}
+    <input type="submit" name="pause" value="Resume" /> {% endif %}
+    <br>
+    <br> {% csrf_token %} {% if sim_state == 'stopped' %}
+    <label for="id_flight_time">flight_time:</label>
+    <input type="number" name="flight_time" value={{ cur_flight_time }} step="any" required id="flight_time" />
     <br>
     <br>
-    {% csrf_token %}
-    {% if sim_state == 'stopped' %}
-      <label for="id_flight_time">flight_time:</label>
-      <input type="number" name="flight_time" value={{ cur_flight_time }} step="any" required id="flight_time"/>
-      <br>
-      <br>
-      <label for="id_report_time">report_time:</label>
-      <input type="number" name="report_time" value={{ cur_report_time }} step="any" required id="report_time"/>
-      <br>
-      <br>
-      <label for="id_update_time">update_time:</label>
-      <input type="number" name="update_time" value={{ cur_update_time }} step="any" required id="update_time"/>
-      <br>
-      <br>
-      <label for="id_time_per_update">time_per_update:</label>
-      <input type="number" name="time_per_update" value={{ cur_time_per_update }} step="any" required id="time_per_update"/>
-    {% else %}
-      <label for="id_flight_time">flight_time:</label>
-      <input type="number" name="flight_time" value={{ cur_flight_time }} step="any" disabled id="flight_time"/>
-      <br>
-      <br>
-      <label for="id_report_time">report_time:</label>
-      <input type="number" name="report_time" value={{ cur_report_time }} step="any" disabled id="report_time"/>
-      <br>
-      <br>
-      <label for="id_update_time">update_time:</label>
-      <input type="number" name="update_time" value={{ cur_update_time }} step="any" disabled id="update_time"/>
-      <br>
-      <br>
-      <label for="id_time_per_update">time_per_update:</label>
-      <input type="number" name="time_per_update" value={{ cur_time_per_update }} step="any" disabled id="time_per_update"/>
-    {% endif %}
+    <label for="id_report_time">report_time:</label>
+    <input type="number" name="report_time" value={{ cur_report_time }} step="any" required id="report_time" />
+    <br>
+    <br>
+    <label for="id_update_time">update_time:</label>
+    <input type="number" name="update_time" value={{ cur_update_time }} step="any" required id="update_time" />
+    <br>
+    <br>
+    <label for="id_time_per_update">time_per_update:</label>
+    <input type="number" name="time_per_update" value={{ cur_time_per_update }} step="any" required id="time_per_update" /> {% else %}
+    <label for="id_flight_time">flight_time:</label>
+    <input type="number" name="flight_time" value={{ cur_flight_time }} step="any" disabled id="flight_time" />
+    <br>
+    <br>
+    <label for="id_report_time">report_time:</label>
+    <input type="number" name="report_time" value={{ cur_report_time }} step="any" disabled id="report_time" />
+    <br>
+    <br>
+    <label for="id_update_time">update_time:</label>
+    <input type="number" name="update_time" value={{ cur_update_time }} step="any" disabled id="update_time" />
+    <br>
+    <br>
+    <label for="id_time_per_update">time_per_update:</label>
+    <input type="number" name="time_per_update" value={{ cur_time_per_update }} step="any" disabled id="time_per_update" /> {% endif %}
   </form>
 </body>
+
 </html>
