@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from random import randint, uniform
 from netCDF4 import Dataset
+import numpy as np
 import time
 import pickle
 import copy

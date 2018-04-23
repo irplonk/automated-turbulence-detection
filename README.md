@@ -4,11 +4,14 @@ Fall 2017-Spring 2018 Junior Design Project with Honeywell
 ## Release Notes - Version 1.0
 #### New Features
 * Flight paths are now displayed when the cursor hovers over a plane. Controlled via a new toggle
+* Map dynamically resizes to window updates to eliminate the gap between it and the instructions and toggle panel
+
+#### Bug Fixes
+* Toggle and instructions panel no longer off-screen when the window is too small
 * Removed unnecessary imports matplotlib and numpy from simulation
-* Map dynamically resizes to window updates to eliminate the gap between it and the help and toggle panel
 
 #### Known Bugs
-* Active flights located at (0.0, 0.0) in the simulation which do not update
+* Active flights located at (0.0, 0.0) in the simulation which do not appear to update in the database or visualization
 
 ## Installation Information
 
@@ -35,7 +38,9 @@ git clone https://github.com/iplonk3/automated-turbulence-detection.git
 No manual building is necessary, all project files and dependencies will be compiled automatically upon launch
 
 #### Installation
-If the project zip file was downloaded, unzip the downloaded files
+If the project zip file was downloaded, unzip the downloaded files.
+
+Navigate to server/turb/WeatherReportSimulator/Weather_Data and unzip the file all.201708_week1.zip.001 using [7-Zip](https://www.7-zip.org/) or another file archiver with the ability to decompress zip files with multiple volumes.
 
 ### Running
 
@@ -54,3 +59,9 @@ Raw flight and turbulence data from the database can be viewed in a table format
 * The `report_time` parameter controls how frequently in (simulated) seconds new weather reports will be generated
 * The `update_time` parameter controls how frequently in (real) seconds the simulation will update the information in the database
 * The `time_per_update` parameter controls how far the simulation will progress in (simulated) seconds every time the database is updated
+
+#### Troubleshooting
+* If the server will not start and produces an error message about database migrations, run the commands `python server/manage.py makemigrations` and `python server/manage.py migrate`
+from the root project directory, entering a value of '0' for any requested default values
+* If the main page will not display, or does not update even with the simulation running, clear your browsers cache. In Google Chrome this can be done by going to Settings > More tools > Clear browsing data, and selecting the Cached images and files option
+* If the simulation encounters an error, or it will not run and an error message is produced that the file all.201708_week1.nc cannot be found, ensure that the file all.201708_week1.zip.001 located in server/turb/WeatherReportSimulator/Weather_Data has been decompressed, and that the file all.201708_week1.nc is present in the same directory with a size of about 645 MB
